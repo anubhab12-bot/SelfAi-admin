@@ -66,6 +66,7 @@ interface AdminContextType {
   createFeature: (feature: Omit<FeatureFlag, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'>) => void;
   updateFeature: (id: string, updates: Partial<FeatureFlag>) => void;
   deleteFeature: (id: string) => void;
+  updateFeatureTier: (id: string, tier: 'free' | 'partially_free' | 'pro', dailyLimit?: number) => void;
 
   // Users
   users: User[];
@@ -149,7 +150,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (saved as Role) || 'super_admin';
   });
 
-  const VALID_TABS = ['dashboard', 'telemetry', 'billing', 'team', 'monitoring', 'audit', 'settings'];
+  const VALID_TABS = ['dashboard', 'telemetry', 'features', 'billing', 'team', 'monitoring', 'audit', 'settings'];
 
   const getTabFromUrl = (): string => {
     const raw = window.location.hash.replace(/^#\/?/, '').split('?')[0];
@@ -200,7 +201,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(true);
   const [liveLatencyMs, setLiveLatencyMs] = useState<number>(185);
 
-  // Load features - purge any stripe or video remnants
+  // Load features - purge any stripe or video remnants & ensure core defaults exist
   const [features, setFeatures] = useState<FeatureFlag[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.FEATURES);
     let list: FeatureFlag[] = saved ? JSON.parse(saved) : INITIAL_FEATURE_FLAGS;
@@ -209,7 +210,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         !['stripe_checkout', 'ai_video_studio', 'video_generation_engine', 'feat-video'].includes(f.key) &&
         f.id !== 'feat-video'
     );
-    return list;
+    // Ensure all default core features exist
+    const existingKeys = new Set(list.map(f => f.key));
+    const missing = INITIAL_FEATURE_FLAGS.filter(f => !existingKeys.has(f.key));
+    return [...list, ...missing];
   });
 
   // Load users - filter out any placeholder demo names, keep only real team
@@ -365,19 +369,27 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .map((f) => ({
           key: f.key,
           name: f.name,
-          icon: f.key.includes('theme')
+          icon: f.key === 'jobs'
+            ? 'briefcase'
+            : f.key === 'calendar'
+            ? 'calendar'
+            : f.key === 'images' || f.key.includes('theme')
             ? 'palette'
-            : f.key.includes('pdf') || f.key.includes('doc')
+            : f.key === 'news'
+            ? 'news'
+            : f.key === 'documents' || f.key.includes('pdf') || f.key.includes('doc')
             ? 'file'
-            : f.key.includes('chat')
+            : f.key === 'chat'
             ? 'chat'
-            : f.key.includes('mail')
+            : f.key === 'email' || f.key.includes('mail')
             ? 'mail'
             : 'sparkle',
           description: f.description,
           enabled: f.enabled,
+          tier: f.tier || 'free',
+          dailyLimit: f.dailyLimit || 0,
           category: f.category,
-          route: `/features/${f.key}`,
+          route: f.route || `/features/${f.key}`,
         }));
 
       await fetch(`${railwayUrl}/api/admin/features/sync`, {
@@ -755,6 +767,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  const updateFeatureTier = (id: string, tier: 'free' | 'partially_free' | 'pro', dailyLimit?: number) => {
+    setFeatures((prev) =>
+      prev.map((f) => {
+        if (f.id === id) {
+          const updated: FeatureFlag = {
+            ...f,
+            tier,
+            dailyLimit: dailyLimit !== undefined ? dailyLimit : (f.dailyLimit || 0),
+            updatedAt: new Date().toISOString().split('T')[0],
+            updatedBy: currentUser.name
+          };
+          logAudit('UPDATE_FEATURE_TIER', 'feature_flag', f.key, `Changed access tier to ${tier.toUpperCase()}${dailyLimit !== undefined ? ` (Daily limit: ${dailyLimit})` : ''}`);
+          addToast('success', 'Tier & Quota Updated', `"${f.name}" access tier set to ${tier.toUpperCase().replace('_', ' ')}.`);
+          return updated;
+        }
+        return f;
+      })
+    );
+  };
+
   const deleteFeature = (id: string) => {
     if (!can('features:delete')) {
       addToast('error', 'Access Denied', `Role "${currentRole}" cannot delete feature flags.`);
@@ -1117,6 +1149,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createFeature,
         updateFeature,
         deleteFeature,
+        updateFeatureTier,
         users,
         updateUserRole,
         toggleUserStatus,

@@ -11,11 +11,13 @@ import {
   Sparkles,
   ExternalLink,
   Globe,
-  CreditCard
+  CreditCard,
+  Sliders
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { activeTab, setActiveTab, railwayUrl } = useAdmin();
+  const { activeTab, setActiveTab, features, railwayUrl } = useAdmin();
+  const enabledCount = features.filter((f) => f.enabled).length;
 
   const navItems = [
     {
@@ -23,6 +25,12 @@ export const Sidebar: React.FC = () => {
       label: 'Overview & Analytics',
       icon: LayoutDashboard,
       badge: null
+    },
+    {
+      id: 'features',
+      label: 'Feature Controls',
+      icon: Sliders,
+      badge: `${enabledCount} Live`
     },
     {
       id: 'telemetry',

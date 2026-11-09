@@ -61,6 +61,11 @@ export interface FeatureFlag {
   updatedAt: string;
   updatedBy: string;
   tags: string[];
+  tier?: 'free' | 'partially_free' | 'pro';
+  dailyLimit?: number; // 0 = unlimited, otherwise number of free queries/day
+  route?: string;
+  isCustom?: boolean;
+  usageCount?: number;
 }
 
 export interface User {
