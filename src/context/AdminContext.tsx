@@ -58,6 +58,8 @@ interface AdminContextType {
   toggleUserStatus: (id: string) => void;
   addUser: (userData: Omit<User, 'id' | 'createdAt' | 'lastActive'>) => void;
   deleteUser: (id: string) => void;
+  resendInvite: (id: string) => void;
+  acceptInvite: (id: string) => void;
 
   // Weekly Usage & Analytics
   weeklyUsage: DailyUsage[];
@@ -485,6 +487,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     addToast('success', 'User Invited', `Successfully added ${newUser.name} to SelfAI organization.`);
   };
 
+  const resendInvite = (id: string) => {
+    const target = users.find((u) => u.id === id);
+    if (!target) return;
+    logAudit('RESEND_INVITATION', 'user', target.email, `Dispatched fresh invitation email to ${target.email}`);
+    addToast('info', 'Invitation Email Resent', `A new verification email was dispatched to ${target.email}.`);
+  };
+
+  const acceptInvite = (id: string) => {
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === id) {
+          logAudit('ACCEPT_INVITATION', 'user', u.email, `User accepted invitation and completed Google authentication`);
+          addToast('success', 'Invitation Accepted', `${u.name} (${u.email}) is now verified and active.`);
+          return { ...u, status: 'active', lastActive: 'Active now' };
+        }
+        return u;
+      })
+    );
+  };
+
   const deleteUser = (id: string) => {
     if (!can('users:delete')) {
       addToast('error', 'Access Denied', `Role "${currentRole}" cannot delete users.`);
@@ -565,6 +587,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toggleUserStatus,
         addUser,
         deleteUser,
+        resendInvite,
+        acceptInvite,
         weeklyUsage,
         modelUsage,
         timeRange,

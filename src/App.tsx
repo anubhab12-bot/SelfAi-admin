@@ -4,10 +4,12 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToastContainer } from './components/layout/ToastContainer';
 
-// 4 Streamlined Pages
+// All 6 Rich & Intuitive Pages
 import { Dashboard } from './pages/Dashboard';
 import { FeatureControl } from './pages/FeatureControl';
 import { RbacUsers } from './pages/RbacUsers';
+import { SystemMonitoring } from './pages/SystemMonitoring';
+import { AuditLogs } from './pages/AuditLogs';
 import { Settings } from './pages/Settings';
 
 const AppContent: React.FC = () => {
@@ -21,6 +23,10 @@ const AppContent: React.FC = () => {
         return <FeatureControl />;
       case 'team':
         return <RbacUsers />;
+      case 'monitoring':
+        return <SystemMonitoring />;
+      case 'audit':
+        return <AuditLogs />;
       case 'settings':
         return <Settings />;
       default:
@@ -30,7 +36,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Streamlined Sidebar Navigation */}
+      {/* Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Content Area */}

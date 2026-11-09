@@ -4,10 +4,11 @@ import {
   LayoutDashboard, 
   ToggleLeft, 
   Users, 
+  Activity,
+  FileText,
   Settings, 
   Sparkles,
-  ExternalLink,
-  Radio
+  ExternalLink
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -18,20 +19,32 @@ export const Sidebar: React.FC = () => {
   const navItems = [
     {
       id: 'dashboard',
-      label: 'Overview & Weekly Stats',
+      label: 'Overview & Analytics',
       icon: LayoutDashboard,
       badge: null
     },
     {
       id: 'features',
-      label: 'App Features',
+      label: 'Feature Controls',
       icon: ToggleLeft,
-      badge: `${enabledCount} ON`
+      badge: `${enabledCount} Active`
     },
     {
       id: 'team',
-      label: 'Team & Roles (RBAC)',
+      label: 'Team & Invitations (RBAC)',
       icon: Users,
+      badge: null
+    },
+    {
+      id: 'monitoring',
+      label: 'System Health',
+      icon: Activity,
+      badge: '99.9%'
+    },
+    {
+      id: 'audit',
+      label: 'Audit Trail',
+      icon: FileText,
       badge: null
     },
     {
@@ -43,7 +56,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-60 border-r border-slate-800/80 bg-slate-900/95 flex flex-col h-screen shrink-0 sticky top-0 select-none">
+    <aside className="w-64 border-r border-slate-800/80 bg-slate-900/95 flex flex-col h-screen shrink-0 sticky top-0 select-none">
       {/* Brand Logo */}
       <div className="h-16 border-b border-slate-800/80 flex items-center px-5 gap-3">
         <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-600/30">
@@ -56,12 +69,16 @@ export const Sidebar: React.FC = () => {
               Admin
             </span>
           </div>
-          <p className="text-[11px] text-slate-400">Simple Control Center</p>
+          <p className="text-[11px] text-slate-400">Control & Telemetry Suite</p>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <div className="flex-1 py-4 px-3 space-y-1">
+      <div className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Management
+        </div>
+
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;

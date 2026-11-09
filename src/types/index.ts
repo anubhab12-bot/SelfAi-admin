@@ -62,11 +62,13 @@ export interface User {
   email: string;
   avatar: string;
   role: Role;
-  status: 'active' | 'suspended' | 'pending';
+  status: 'active' | 'pending' | 'suspended';
   department: string;
   lastActive: string;
   createdAt: string;
   mfaEnabled: boolean;
+  inviteSentAt?: string;
+  inviteToken?: string;
 }
 
 export interface ServiceHealth {
@@ -79,6 +81,7 @@ export interface ServiceHealth {
   lastChecked: string;
   region: string;
   liveData?: string;
+  description?: string;
 }
 
 export interface RailwayHealthResponse {
