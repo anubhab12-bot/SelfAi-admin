@@ -309,7 +309,7 @@ export const INITIAL_USERS: User[] = [
 export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
   {
     id: 'log-1',
-    timestamp: '2026-11-09 14:26:15',
+    timestamp: '2026-11-09 19:15:30',
     actor: {
       name: 'Anubhab Nandi',
       email: 'anubhabnandi12@gmail.com',
@@ -324,7 +324,52 @@ export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
   },
   {
     id: 'log-2',
-    timestamp: '2026-11-09 14:15:20',
+    timestamp: '2026-11-09 19:02:18',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'UPDATE_PAYWALL_RULE',
+    category: 'system',
+    targetResource: 'pricing_matrix',
+    details: 'Configured gated access rules: 5 free daily queries before Pro Tier paywall',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-3',
+    timestamp: '2026-11-09 18:45:10',
+    actor: {
+      name: 'Shampa Nandi',
+      email: 'shampanandi49@gmail.com',
+      role: 'analyst'
+    },
+    action: 'ACCEPT_INVITATION',
+    category: 'rbac',
+    targetResource: 'team:shampanandi49@gmail.com',
+    details: 'Successfully joined Self AI workspace with assigned role: Analyst (Read-only analytics)',
+    ipAddress: '192.168.1.105',
+    status: 'success'
+  },
+  {
+    id: 'log-4',
+    timestamp: '2026-11-09 18:30:22',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'INVITE_USER',
+    category: 'rbac',
+    targetResource: 'shampanandi49@gmail.com',
+    details: 'Sent workspace invitation to Shampa Nandi with Viewer role and 7-day token expiration',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-5',
+    timestamp: '2026-11-09 18:14:05',
     actor: {
       name: 'Anubhab Nandi',
       email: 'anubhabnandi12@gmail.com',
@@ -338,8 +383,8 @@ export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
     status: 'success'
   },
   {
-    id: 'log-3',
-    timestamp: '2026-11-09 13:42:10',
+    id: 'log-6',
+    timestamp: '2026-11-09 17:58:44',
     actor: {
       name: 'Anubhab Nandi',
       email: 'anubhabnandi12@gmail.com',
@@ -349,6 +394,246 @@ export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
     category: 'feature_flag',
     targetResource: 'email',
     details: 'Confirmed email assistant enabled for anubhabnandi12@gmail.com',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-7',
+    timestamp: '2026-11-09 17:40:12',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'TELEMETRY_PIPELINE_INIT',
+    category: 'system',
+    targetResource: 'wss://frontend-production-0c17e.up.railway.app/telemetry',
+    details: 'Initialized live geolocation and active session tracker across active nodes',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-8',
+    timestamp: '2026-11-09 17:15:33',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'CHROMA_VECTOR_SYNC',
+    category: 'system',
+    targetResource: 'chroma_rag_collection',
+    details: 'Indexed user document embeddings and validated similarity search index (k=5)',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-9',
+    timestamp: '2026-11-09 16:50:18',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'AUTH_SESSION_ESTABLISHED',
+    category: 'auth',
+    targetResource: 'session_jwt_live',
+    details: 'Issued administrative JWT session token with TLS 1.3 256-bit encryption',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-10',
+    timestamp: '2026-11-09 16:22:50',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'SECURITY_COMPLIANCE_SCAN',
+    category: 'system',
+    targetResource: 'fleet_audit',
+    details: 'Automated vulnerability scan completed: 0 critical vulnerabilities, CORS policy strictly enforced',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-11',
+    timestamp: '2026-11-09 15:55:04',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'DATABASE_SNAPSHOT',
+    category: 'system',
+    targetResource: '/data/selfai.db',
+    details: 'Created automated hourly SQLite persistent snapshot in Railway storage volume',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-12',
+    timestamp: '2026-11-09 15:30:19',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'PAYMENT_GATEWAY_VERIFIED',
+    category: 'system',
+    targetResource: 'razorpay_gateway',
+    details: 'Validated webhook endpoint signature verification for live customer receipts',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-13',
+    timestamp: '2026-11-09 15:10:42',
+    actor: {
+      name: 'Shampa Nandi',
+      email: 'shampanandi49@gmail.com',
+      role: 'analyst'
+    },
+    action: 'USER_LOGIN',
+    category: 'auth',
+    targetResource: 'auth:login',
+    details: 'Viewer logged in via authenticated Google account session',
+    ipAddress: '192.168.1.105',
+    status: 'success'
+  },
+  {
+    id: 'log-14',
+    timestamp: '2026-11-09 14:48:15',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'UPDATE_RATE_LIMIT',
+    category: 'system',
+    targetResource: '/api/chat/guest',
+    details: 'Enforced rate cap: maximum 5 requests per 24-hour window for unauthenticated sessions',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-15',
+    timestamp: '2026-11-09 14:20:00',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'MODEL_FALLBACK_PROBE',
+    category: 'system',
+    targetResource: 'gemini-flash-lite-latest',
+    details: 'Tested automated failover route during simulated primary model threshold testing',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-16',
+    timestamp: '2026-11-09 13:55:12',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'CACHE_INVALIDATION',
+    category: 'system',
+    targetResource: 'redis_cache_layer',
+    details: 'Purged stale user profile and preference cache across microservice endpoints',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-17',
+    timestamp: '2026-11-09 13:30:25',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'ACCESS_AUDIT_REVIEW',
+    category: 'rbac',
+    targetResource: 'rbac_matrix',
+    details: 'Quarterly user access privileges reviewed and certified compliant with ISO 27001 standards',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-18',
+    timestamp: '2026-11-09 12:45:00',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'TLS_CERT_VERIFICATION',
+    category: 'system',
+    targetResource: '*.up.railway.app',
+    details: 'Automated Let’s Encrypt TLS certificate renewed; 89 days remaining until next renewal',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-19',
+    timestamp: '2026-11-09 12:10:48',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'STORAGE_QUOTA_AUDIT',
+    category: 'system',
+    targetResource: 'volume:backend-data',
+    details: 'Volume storage utilization checked: 42MB used of 500MB provisioned (8.4%)',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-20',
+    timestamp: '2026-11-09 11:35:10',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'API_TOKEN_ROTATION',
+    category: 'system',
+    targetResource: 'internal_service_bearer',
+    details: 'Service-to-service communication bearer token rotated and distributed to environment configs',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-21',
+    timestamp: '2026-11-09 11:00:22',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'ENV_VARIABLES_SYNC',
+    category: 'system',
+    targetResource: 'production_environment',
+    details: 'Synchronized production environment flags without container reboot',
+    ipAddress: '192.168.1.104',
+    status: 'success'
+  },
+  {
+    id: 'log-22',
+    timestamp: '2026-11-09 10:20:15',
+    actor: {
+      name: 'Anubhab Nandi',
+      email: 'anubhabnandi12@gmail.com',
+      role: 'super_admin'
+    },
+    action: 'INITIAL_SYSTEM_BOOT',
+    category: 'system',
+    targetResource: 'cluster_bootstrap',
+    details: 'All microservice health checks reporting green (Chat, Calendar, Email, Docs, Art)',
     ipAddress: '192.168.1.104',
     status: 'success'
   }

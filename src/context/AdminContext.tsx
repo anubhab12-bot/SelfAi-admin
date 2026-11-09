@@ -229,7 +229,19 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load audit logs
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.LOGS);
-    return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
+    if (saved) {
+      try {
+        const parsed: AuditLogItem[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const existingIds = new Set(parsed.map((p) => p.id));
+          const additions = INITIAL_AUDIT_LOGS.filter((init) => !existingIds.has(init.id));
+          return [...parsed, ...additions];
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_AUDIT_LOGS;
   });
 
   // Load videos - clean empty list
