@@ -284,6 +284,7 @@ export const INITIAL_FEATURE_FLAGS: FeatureFlag[] = [
   }
 ];
 
+// ONLY your real account is included! All demo placeholder names are removed.
 export const INITIAL_USERS: User[] = [
   {
     id: 'usr-1',
@@ -296,54 +297,6 @@ export const INITIAL_USERS: User[] = [
     lastActive: 'Active now',
     createdAt: '2026-01-15',
     mfaEnabled: true
-  },
-  {
-    id: 'usr-2',
-    name: 'Elena Rostova',
-    email: 'elena.rostova@selfai.internal',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
-    role: 'admin',
-    status: 'active',
-    department: 'Railway Infrastructure & Ops',
-    lastActive: '12 mins ago',
-    createdAt: '2026-02-01',
-    mfaEnabled: true
-  },
-  {
-    id: 'usr-3',
-    name: 'Marcus Chen',
-    email: 'marcus.chen@selfai.internal',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    role: 'product_manager',
-    status: 'active',
-    department: 'Chat & Personal AI Features',
-    lastActive: '45 mins ago',
-    createdAt: '2026-03-10',
-    mfaEnabled: true
-  },
-  {
-    id: 'usr-4',
-    name: 'Sarah Connor',
-    email: 'sarah.connor@selfai.internal',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-    role: 'analyst',
-    status: 'active',
-    department: 'User Analytics & Gemini Tokens',
-    lastActive: '3 hours ago',
-    createdAt: '2026-04-20',
-    mfaEnabled: true
-  },
-  {
-    id: 'usr-5',
-    name: 'David Kim',
-    email: 'david.kim@selfai.internal',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    role: 'support',
-    status: 'active',
-    department: 'Guest User Support',
-    lastActive: '20 mins ago',
-    createdAt: '2026-05-12',
-    mfaEnabled: false
   }
 ];
 

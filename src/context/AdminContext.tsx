@@ -116,10 +116,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : INITIAL_FEATURE_FLAGS;
   });
 
-  // Load users
+  // Load users - filter out any placeholder demo names
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.USERS);
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    if (saved) {
+      const parsed: User[] = JSON.parse(saved);
+      // Remove mock placeholder users
+      const cleaned = parsed.filter(u => !['elena.rostova@selfai.internal', 'marcus.chen@selfai.internal', 'sarah.connor@selfai.internal', 'david.kim@selfai.internal', 'priya.patel@selfai.internal'].includes(u.email));
+      if (cleaned.length > 0) return cleaned;
+    }
+    return INITIAL_USERS;
   });
 
   // Load audit logs
