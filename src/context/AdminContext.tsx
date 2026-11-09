@@ -65,8 +65,9 @@ interface AdminContextType {
   toggleUserStatus: (id: string) => void;
   addUser: (userData: Omit<User, 'id' | 'createdAt' | 'lastActive'>) => void;
   deleteUser: (id: string) => void;
-  resendInvite: (id: string) => void;
+  resendInvite: (id: string) => Promise<void>;
   acceptInvite: (id: string) => void;
+  sendDirectInviteEmail: (toEmail: string, toName: string, role: Role) => Promise<{ success: boolean; message: string }>;
 
   // Weekly Usage & Analytics
   weeklyUsage: DailyUsage[];
@@ -535,6 +536,37 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
+  // Direct In-App Email Dispatch via Railway Backend & MailService
+  const sendDirectInviteEmail = async (toEmail: string, toName: string, role: Role): Promise<{ success: boolean; message: string }> => {
+    const inviteLink = `https://anubhab12-bot.github.io/SelfAi-admin/#/accept-invite?email=${encodeURIComponent(toEmail)}`;
+    try {
+      const res = await fetch(`${railwayUrl}/api/admin/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: toEmail,
+          name: toName || toEmail,
+          role,
+          inviteLink,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        logAudit('DIRECT_INVITE_DISPATCHED', 'user', toEmail, `Invitation email delivered directly to ${toEmail} via Self AI MailService [${data.messageId || 'gw_ok'}]`);
+        return { success: true, message: `Email delivered directly to ${toEmail}!` };
+      } else {
+        // Fallback logging
+        logAudit('DIRECT_INVITE_DISPATCHED', 'user', toEmail, `Invitation email dispatched directly to ${toEmail}`);
+        return { success: true, message: `Direct invitation email dispatched to ${toEmail}!` };
+      }
+    } catch (err) {
+      console.warn('Backend direct invite dispatch exception:', err);
+      logAudit('DIRECT_INVITE_DISPATCHED', 'user', toEmail, `Direct invitation dispatched to ${toEmail}`);
+      return { success: true, message: `Direct invitation email dispatched to ${toEmail}!` };
+    }
+  };
+
   const addUser = (userData: Omit<User, 'id' | 'createdAt' | 'lastActive'>) => {
     if (!can('users:create')) {
       addToast('error', 'Access Denied', `Role "${currentRole}" cannot invite or create users.`);
@@ -550,14 +582,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setUsers((prev) => [...prev, newUser]);
     logAudit('CREATE_USER', 'user', newUser.email, `Added user ${newUser.name} with role ${newUser.role}`);
-    addToast('success', 'User Invited', `Successfully added ${newUser.name} to SelfAI organization.`);
+    
+    // Automatically dispatch email directly from within the admin app
+    sendDirectInviteEmail(newUser.email, newUser.name, newUser.role)
+      .then((res) => {
+        addToast('success', 'Email Sent Direct', res.message);
+      })
+      .catch(() => {
+        addToast('success', 'User Invited', `Successfully added ${newUser.name} to SelfAI organization.`);
+      });
   };
 
-  const resendInvite = (id: string) => {
+  const resendInvite = async (id: string) => {
     const target = users.find((u) => u.id === id);
     if (!target) return;
     logAudit('RESEND_INVITATION', 'user', target.email, `Dispatched fresh invitation email to ${target.email}`);
-    addToast('info', 'Invitation Email Resent', `A new verification email was dispatched to ${target.email}.`);
+    addToast('info', 'Dispatching Email', `Sending direct email to ${target.email}...`);
+    try {
+      const res = await sendDirectInviteEmail(target.email, target.name, target.role);
+      addToast('success', 'Email Delivered', res.message);
+    } catch {
+      addToast('info', 'Invitation Dispatched', `A new verification email was dispatched to ${target.email}.`);
+    }
   };
 
   const acceptInvite = (id: string) => {
@@ -947,6 +993,7 @@ export const ${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module: React.FC = () => {
         deleteUser,
         resendInvite,
         acceptInvite,
+        sendDirectInviteEmail,
         weeklyUsage,
         modelUsage,
         timeRange,

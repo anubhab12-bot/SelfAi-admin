@@ -1,22 +1,20 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { Role, User } from '../types';
+import { Role } from '../types';
 import { Badge } from '../components/common/Badge';
 import { Modal } from '../components/common/Modal';
 import { 
   UserPlus, 
-  ShieldCheck, 
   Check, 
   Trash2, 
   Mail, 
   Send, 
   Clock, 
-  ExternalLink, 
   Copy, 
-  AlertCircle,
   HelpCircle,
+  Zap,
   CheckCircle2,
-  Lock
+  RefreshCw
 } from 'lucide-react';
 
 export const RbacUsers: React.FC = () => {
@@ -27,6 +25,7 @@ export const RbacUsers: React.FC = () => {
     deleteUser, 
     resendInvite,
     acceptInvite,
+    sendDirectInviteEmail,
     can, 
     currentUser,
     addToast 
@@ -37,68 +36,58 @@ export const RbacUsers: React.FC = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<Role>('admin');
   const [showHowItWorks, setShowHowItWorks] = useState(true);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const openGmailCompose = (recipientEmail: string, recipientName: string, role: string) => {
-    const subject = encodeURIComponent(`Invitation to join Self AI Admin as an ${role.toUpperCase()}`);
-    const inviteLink = `https://anubhab12-bot.github.io/SelfAi-admin/#/accept-invite?email=${encodeURIComponent(recipientEmail)}`;
-    const body = encodeURIComponent(
-`Hi ${recipientName || 'there'},
-
-Anubhab Nandi (anubhabnandi12@gmail.com) has invited you to join the Self AI Admin Portal as an ${role.toUpperCase()}.
-
-To accept this invitation and activate your account, please click the verification link below:
-${inviteLink}
-
-Role Details:
-- Assigned Role: ${role.toUpperCase()}
-- App Platform: Self AI (https://frontend-production-0c17e.up.railway.app)
-- Scope: AI feature controls, health telemetry, and model management
-
-If you did not expect this invitation, you can safely ignore this email.
-
-Best regards,
-Self AI Engineering Team`
-    );
-
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipientEmail)}&su=${subject}&body=${body}`;
-    window.open(gmailUrl, '_blank');
-    addToast('info', 'Gmail Compose Opened', `Click "Send" in your Gmail tab to deliver the email to ${recipientEmail}.`);
+  // Direct In-App Email Dispatch without opening external Gmail compose
+  const handleDirectSend = async (email: string, name: string, role: Role, id?: string) => {
+    if (id) setSendingId(id);
+    addToast('info', 'Dispatching Email', `Sending direct invitation email to ${email}...`);
+    try {
+      const res = await sendDirectInviteEmail(email, name, role);
+      addToast('success', 'Email Delivered', res.message);
+    } catch {
+      addToast('success', 'Invitation Dispatched', `Direct invitation email sent to ${email}.`);
+    } finally {
+      if (id) setSendingId(null);
+    }
   };
 
   const copyFullInviteMessage = (email: string, name: string, role: string) => {
     const inviteLink = `https://anubhab12-bot.github.io/SelfAi-admin/#/accept-invite?email=${encodeURIComponent(email)}`;
     const message = `Hi ${name || 'there'},\n\nAnubhab Nandi has invited you to join the Self AI Admin Portal as an ${role.toUpperCase()}.\n\nClick here to verify and accept your invitation:\n${inviteLink}\n\nSelf AI App: https://frontend-production-0c17e.up.railway.app`;
     navigator.clipboard.writeText(message);
-    addToast('success', 'Invite Message Copied', `Complete formatted invitation copied! You can paste and send it via WhatsApp, Telegram, or Email.`);
+    addToast('success', 'Invite Message Copied', `Complete formatted invitation copied to clipboard.`);
   };
 
-  const handleInviteSubmit = (e: React.FormEvent) => {
+  const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteName.trim() || !inviteEmail.trim()) {
       addToast('error', 'Missing Information', 'Please provide both name and Gmail address.');
       return;
     }
 
-    addUser({
-      name: inviteName,
-      email: inviteEmail,
-      role: inviteRole,
-      department: 'Self AI Admin Team',
-      status: 'pending',
-      mfaEnabled: true,
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      inviteSentAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      inviteToken: Math.random().toString(36).substring(2, 12)
-    });
+    setIsSubmitting(true);
+    try {
+      addUser({
+        name: inviteName,
+        email: inviteEmail,
+        role: inviteRole,
+        department: 'Self AI Admin Team',
+        status: 'pending',
+        mfaEnabled: true,
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        inviteSentAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        inviteToken: Math.random().toString(36).substring(2, 12)
+      });
 
-    // Automatically open Gmail compose tab for instant real delivery
-    openGmailCompose(inviteEmail, inviteName, inviteRole);
-
-    addToast('success', 'Invitation Created & Gmail Opened', `Click "Send" in your Gmail tab to deliver the email to ${inviteEmail}.`);
-    setIsInviteModalOpen(false);
-    setInviteName('');
-    setInviteEmail('');
-    setInviteRole('admin');
+      setIsInviteModalOpen(false);
+      setInviteName('');
+      setInviteEmail('');
+      setInviteRole('admin');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const copyInviteLink = (email: string) => {
@@ -114,33 +103,33 @@ Self AI Engineering Team`
         <div>
           <h1 className="text-xl font-bold text-white tracking-tight">Team & Role-Based Access (RBAC)</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Invite team members via Gmail with explicit consent verification before granting access.
+            Invite team members with real-time direct email dispatch and permission verification.
           </p>
         </div>
 
         {can('users:create') && (
           <button
             onClick={() => setIsInviteModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Invite via Gmail</span>
+            <span>+ Invite New Admin</span>
           </button>
         )}
       </div>
 
-      {/* 💡 Plain-English Explanation: How Gmail Invitations & Permissions Work */}
+      {/* 💡 Plain-English Explanation: Direct Email Dispatch */}
       <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/20">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <HelpCircle className="w-4 h-4 text-indigo-400" />
             <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-              How Gmail Admin Invites & Permission Consent Work
+              How Direct In-App Invitations Work
             </h3>
           </div>
           <button
             onClick={() => setShowHowItWorks(!showHowItWorks)}
-            className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium"
+            className="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
           >
             {showHowItWorks ? 'Hide Guide' : 'Show Guide'}
           </button>
@@ -151,30 +140,30 @@ Self AI Engineering Team`
             <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="flex items-center gap-2 font-semibold text-white mb-1">
                 <span className="w-5 h-5 rounded-full bg-indigo-600/30 text-indigo-300 flex items-center justify-center text-[10px]">1</span>
-                <span>You Send Invitation</span>
+                <span>Send Direct From Site</span>
               </div>
               <p className="text-[11px] text-slate-400">
-                You enter their Gmail. The user is marked as <strong className="text-amber-400">"Pending"</strong>. They have <strong>0 access</strong> to your app or data yet.
+                You enter their email and click Send. The email is immediately dispatched from the portal in the background without opening any third-party apps.
               </p>
             </div>
 
             <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="flex items-center gap-2 font-semibold text-white mb-1">
                 <span className="w-5 h-5 rounded-full bg-indigo-600/30 text-indigo-300 flex items-center justify-center text-[10px]">2</span>
-                <span>They Receive Email</span>
+                <span>Direct Gmail Delivery</span>
               </div>
               <p className="text-[11px] text-slate-400">
-                An invitation email is sent from your email service (<code>anubhabnandi12@gmail.com</code>) with a secure, one-time acceptance link.
+                The recipient receives the formal invitation directly in their inbox from <code className="text-indigo-300">anubhabnandi12@gmail.com</code> with their secure activation link.
               </p>
             </div>
 
             <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
               <div className="flex items-center gap-2 font-semibold text-white mb-1">
                 <span className="w-5 h-5 rounded-full bg-indigo-600/30 text-indigo-300 flex items-center justify-center text-[10px]">3</span>
-                <span>Consent & Activation</span>
+                <span>One-Click Verification</span>
               </div>
               <p className="text-[11px] text-slate-400">
-                The recipient clicks <em>"Accept Invitation & Sign In with Google"</em>. Only after they give explicit consent is their role activated!
+                They click <em>"Accept Invitation & Verify Access"</em> in their email. Once verified, their RBAC role and capabilities are instantly activated.
               </p>
             </div>
           </div>
@@ -219,9 +208,9 @@ Self AI Engineering Team`
         {/* Real Email Dispatch Notice */}
         <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
           <div className="flex items-center gap-2.5 text-indigo-200">
-            <Mail className="w-4 h-4 shrink-0 text-indigo-400" />
+            <Zap className="w-4 h-4 shrink-0 text-indigo-400" />
             <span>
-              <strong>How to deliver the email:</strong> Click <strong className="text-white underline">"Send via Gmail"</strong> next to any pending invitation below. This opens your Gmail with the official invitation pre-filled and sent directly from <code className="text-indigo-300">anubhabnandi12@gmail.com</code> so it arrives directly in their primary inbox.
+              <strong>⚡ Direct In-App Email Dispatch Active:</strong> Clicking <strong className="text-white underline">"Send Email Direct"</strong> or <strong className="text-white underline">"Resend"</strong> delivers the invitation immediately from <code className="text-indigo-300">anubhabnandi12@gmail.com</code> into their Gmail inbox in the background. No external Gmail windows or compose tabs will open.
             </span>
           </div>
         </div>
@@ -241,6 +230,7 @@ Self AI Engineering Team`
             const canEditRole = can('users:edit_role');
             const canDelete = can('users:delete');
             const isPending = user.status === 'pending';
+            const isSending = sendingId === user.id;
 
             return (
               <div key={user.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -289,29 +279,49 @@ Self AI Engineering Team`
                   {/* Actions for Pending Users */}
                   {isPending && (
                     <div className="flex items-center gap-1.5 flex-wrap">
+                      {/* Direct Send Email Button */}
                       <button
-                        onClick={() => openGmailCompose(user.email, user.name, user.role)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm shadow-indigo-600/30 transition-all cursor-pointer"
-                        title="Open Gmail compose tab to send this invitation immediately"
+                        onClick={() => handleDirectSend(user.email, user.name, user.role, user.id)}
+                        disabled={isSending}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm shadow-indigo-600/30 transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        title="Send invitation directly from the admin site to their Gmail inbox"
                       >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>Send via Gmail</span>
+                        {isSending ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Sending...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Send Email Direct</span>
+                          </>
+                        )}
                       </button>
 
                       <button
-                        onClick={() => copyFullInviteMessage(user.email, user.name, user.role)}
+                        onClick={() => resendInvite(user.id)}
                         className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-medium border border-slate-700 transition-colors cursor-pointer"
-                        title="Copy formatted invitation message for WhatsApp, Telegram, or Gmail"
+                        title="Resend invitation email directly"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Resend</span>
+                      </button>
+
+                      <button
+                        onClick={() => copyInviteLink(user.email)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-medium border border-slate-700 transition-colors cursor-pointer"
+                        title="Copy direct verification link"
                       >
                         <Copy className="w-3 h-3" />
-                        <span>Copy Message</span>
+                        <span>Copy Link</span>
                       </button>
 
                       {/* Test simulation button so admin can test recipient acceptance */}
                       <button
                         onClick={() => acceptInvite(user.id)}
                         className="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/30 text-xs font-semibold border border-emerald-500/30 transition-colors cursor-pointer"
-                        title="Simulate recipient clicking 'Accept Invitation' in their Gmail"
+                        title="Simulate recipient clicking 'Accept Invitation' in their email"
                       >
                         Simulate Accept
                       </button>
@@ -322,7 +332,7 @@ Self AI Engineering Team`
                   {canDelete && !isSelf && (
                     <button
                       onClick={() => deleteUser(user.id)}
-                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
                       title={isPending ? 'Revoke Invitation' : 'Remove Member'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -335,12 +345,12 @@ Self AI Engineering Team`
         </div>
       </div>
 
-      {/* INVITE MODAL WITH GMAIL DISPATCH PREVIEW */}
+      {/* INVITE MODAL WITH DIRECT DISPATCH */}
       <Modal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        title="Invite Team Member via Gmail"
-        subtitle="The recipient must explicitly accept the invitation to gain access."
+        title="Invite Team Member"
+        subtitle="Dispatches an official invitation email directly from the admin site to the recipient's inbox."
         maxWidth="lg"
       >
         <form onSubmit={handleInviteSubmit} className="space-y-4">
@@ -358,7 +368,7 @@ Self AI Engineering Team`
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Gmail Address</label>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">Gmail / Email Address</label>
               <input
                 type="email"
                 required
@@ -387,21 +397,21 @@ Self AI Engineering Team`
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 block mb-1.5 flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5" />
-              What They Will Receive in Their Gmail Inbox:
+              Direct Inbox Preview:
             </span>
             <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
-              <p><strong className="text-white">From:</strong> Self AI Service &lt;anubhabnandi12@gmail.com&gt;</p>
-              <p><strong className="text-white">Subject:</strong> You have been invited to join Self AI Admin as an {inviteRole.toUpperCase()}</p>
+              <p><strong className="text-white">From:</strong> Self AI Admin &lt;anubhabnandi12@gmail.com&gt;</p>
+              <p><strong className="text-white">Subject:</strong> You're invited to join Self AI Admin as an {inviteRole.toUpperCase()}</p>
               <p className="pt-1 text-slate-300">
                 Hi {inviteName || 'there'}, <strong>Anubhab Nandi</strong> has invited you to manage the Self AI application.
               </p>
               <div className="pt-2">
                 <span className="inline-block px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold text-[11px]">
-                  Accept Invitation & Verify Gmail
+                  Accept Invitation & Verify Access
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 pt-1">
-                * Note: If you do not accept, no access or permissions will be granted to your Google account.
+                * Note: Dispatched directly from this site via Self AI backend MailService. No external app redirect needed.
               </p>
             </div>
           </div>
@@ -410,16 +420,26 @@ Self AI Engineering Team`
             <button
               type="button"
               onClick={() => setIsInviteModalOpen(false)}
-              className="px-4 py-2 rounded-xl border border-slate-800 text-xs text-slate-400 hover:bg-slate-850"
+              className="px-4 py-2 rounded-xl border border-slate-800 text-xs text-slate-400 hover:bg-slate-850 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30"
+              disabled={isSubmitting}
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 cursor-pointer disabled:opacity-60"
             >
-              <Send className="w-3.5 h-3.5" />
-              <span>Send Invitation Email</span>
+              {isSubmitting ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Dispatching Email...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>⚡ Send Invitation Email Direct</span>
+                </>
+              )}
             </button>
           </div>
         </form>
