@@ -205,11 +205,29 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [features, setFeatures] = useState<FeatureFlag[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.FEATURES);
     let list: FeatureFlag[] = saved ? JSON.parse(saved) : INITIAL_FEATURE_FLAGS;
-    list = list.filter(
-      (f) =>
-        !['stripe_checkout', 'ai_video_studio', 'video_generation_engine', 'feat-video'].includes(f.key) &&
-        f.id !== 'feat-video'
-    );
+    const DISALLOWED_FEATURES = [
+      'stripe_checkout',
+      'ai_video_studio',
+      'video_generation_engine',
+      'feat-video',
+      'chroma_vector_db',
+      'guest_chat_sandbox',
+      'gemini_fallback_cluster',
+      'news_and_documents'
+    ];
+    list = list.filter((f) => !DISALLOWED_FEATURES.includes(f.key) && !DISALLOWED_FEATURES.includes(f.id));
+    list = list.map((f) => {
+      let route = f.route;
+      if (f.key === 'chat') route = '/chat';
+      else if (f.key === 'calendar') route = '/calendar';
+      else if (f.key === 'jobs') route = '/jobs';
+      else if (f.key === 'email') route = '/email';
+      else if (f.key === 'images') route = '/images';
+      else if (f.key === 'news') route = '/news';
+      else if (f.key === 'documents') route = '/documents';
+      else if (!route || route.startsWith('/features')) route = '/chat';
+      return { ...f, route };
+    });
     // Ensure all default core features exist
     const existingKeys = new Set(list.map(f => f.key));
     const missing = INITIAL_FEATURE_FLAGS.filter(f => !existingKeys.has(f.key));
@@ -360,12 +378,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Sync features list directly to Railway Backend so the main app always matches Admin
   const syncFeaturesToRailway = async (feats: FeatureFlag[]) => {
     try {
+      const DISALLOWED_FEATURES = [
+        'stripe_checkout',
+        'ai_video_studio',
+        'video_generation_engine',
+        'feat-video',
+        'chroma_vector_db',
+        'guest_chat_sandbox',
+        'gemini_fallback_cluster',
+        'news_and_documents'
+      ];
       const activePayload = feats
-        .filter(
-          (f) =>
-            !['stripe_checkout', 'ai_video_studio', 'video_generation_engine', 'feat-video'].includes(f.key) &&
-            f.id !== 'feat-video'
-        )
+        .filter((f) => !DISALLOWED_FEATURES.includes(f.key) && !DISALLOWED_FEATURES.includes(f.id))
         .map((f) => ({
           key: f.key,
           name: f.name,
@@ -389,7 +413,21 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           tier: f.tier || 'free',
           dailyLimit: f.dailyLimit || 0,
           category: f.category,
-          route: f.route || `/features/${f.key}`,
+          route: f.route && !f.route.startsWith('/features')
+            ? f.route
+            : f.key === 'jobs'
+            ? '/jobs'
+            : f.key === 'calendar'
+            ? '/calendar'
+            : f.key === 'images'
+            ? '/images'
+            : f.key === 'news'
+            ? '/news'
+            : f.key === 'documents'
+            ? '/documents'
+            : f.key === 'email'
+            ? '/email'
+            : '/chat',
         }));
 
       await fetch(`${railwayUrl}/api/admin/features/sync`, {
@@ -734,7 +772,21 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : newFeature.key.includes('mail')
           ? 'mail'
           : 'sparkle',
-        route: `/features/${newFeature.key}`
+        route: newFeature.route && !newFeature.route.startsWith('/features')
+          ? newFeature.route
+          : newFeature.key.includes('job')
+          ? '/jobs'
+          : newFeature.key.includes('news')
+          ? '/news'
+          : newFeature.key.includes('doc')
+          ? '/documents'
+          : newFeature.key.includes('calendar')
+          ? '/calendar'
+          : newFeature.key.includes('mail')
+          ? '/email'
+          : newFeature.key.includes('image') || newFeature.key.includes('art')
+          ? '/images'
+          : '/chat'
       })
     }).catch(() => {});
 
