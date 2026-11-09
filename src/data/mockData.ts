@@ -1,4 +1,4 @@
-import { FeatureFlag, User, ServiceHealth, DailyUsage, ModelUsage, AuditLogItem, GeneratedVideo } from '../types';
+import { FeatureFlag, User, ServiceHealth, DailyUsage, ModelUsage, AuditLogItem, GeneratedVideo, McpServer, AgentTask } from '../types';
 
 export const RAILWAY_APP_URL = 'https://frontend-production-0c17e.up.railway.app';
 
@@ -404,5 +404,135 @@ export const INITIAL_AUDIT_LOGS: AuditLogItem[] = [
     details: 'Confirmed email assistant enabled for anubhabnandi12@gmail.com',
     ipAddress: '192.168.1.104',
     status: 'success'
+  }
+];
+
+export const INITIAL_MCP_SERVERS: McpServer[] = [
+  {
+    id: 'mcp-selfai-core',
+    name: 'SelfAI Core Runtime MCP',
+    description: 'Direct Model Context Protocol bridge to your live Railway cluster (frontend-production-0c17e).',
+    transport: 'sse',
+    url: 'https://frontend-production-0c17e.up.railway.app/mcp/sse',
+    status: 'connected',
+    lastPing: 'Live (42ms)',
+    tools: [
+      {
+        name: 'inject_feature_to_app',
+        description: 'Dynamically registers, enables, and activates any new feature in the live SelfAI app runtime.',
+        serverName: 'SelfAI Core Runtime MCP',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Name of the feature to add' },
+            key: { type: 'string', description: 'Unique code slug for feature' },
+            category: { type: 'string', enum: ['ai_models', 'ui_ux', 'integrations', 'developer'] },
+            rolloutPercentage: { type: 'number', minimum: 0, maximum: 100 }
+          },
+          required: ['name', 'key']
+        }
+      },
+      {
+        name: 'query_chroma_rag_memory',
+        description: 'Semantic vector retrieval and document embedding indexing using gemini-embedding-001.',
+        serverName: 'SelfAI Core Runtime MCP',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            query: { type: 'string' },
+            topK: { type: 'number', default: 5 }
+          },
+          required: ['query']
+        }
+      },
+      {
+        name: 'dispatch_system_email',
+        description: 'Sends transactional consent notifications through anubhabnandi12@gmail.com.',
+        serverName: 'SelfAI Core Runtime MCP',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            to: { type: 'string' },
+            subject: { type: 'string' },
+            htmlContent: { type: 'string' }
+          },
+          required: ['to', 'subject', 'htmlContent']
+        }
+      }
+    ]
+  },
+  {
+    id: 'mcp-railway',
+    name: 'Railway Cloud DevOps MCP',
+    description: 'Infrastructure automation for container scaling, environment variables, and rolling redeploys.',
+    transport: 'sse',
+    url: 'https://backboard.railway.app/mcp/v1',
+    status: 'connected',
+    lastPing: 'Live (185ms)',
+    tools: [
+      {
+        name: 'redeploy_microservice',
+        description: 'Triggers zero-downtime rolling restart or redeployment of backend containers.',
+        serverName: 'Railway Cloud DevOps MCP',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            serviceId: { type: 'string' }
+          },
+          required: ['serviceId']
+        }
+      },
+      {
+        name: 'set_app_variable',
+        description: 'Updates environment variables (API keys, connection strings, flags) on Railway.',
+        serverName: 'Railway Cloud DevOps MCP',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            key: { type: 'string' },
+            value: { type: 'string' }
+          },
+          required: ['key', 'value']
+        }
+      }
+    ]
+  },
+  {
+    id: 'mcp-gemini',
+    name: 'Gemini & Veo Multi-Modal Synthesis MCP',
+    description: 'Generative AI inference tool providing real-time code generation, Veo video rendering, and voice synthesis.',
+    transport: 'websocket',
+    url: 'wss://generativelanguage.googleapis.com/v1beta/mcp',
+    status: 'connected',
+    lastPing: 'Live (65ms)',
+    tools: [
+      {
+        name: 'generate_app_component',
+        description: 'Synthesizes complete responsive React/Angular components from visual descriptions.',
+        serverName: 'Gemini & Veo Multi-Modal Synthesis MCP',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            specification: { type: 'string' },
+            framework: { type: 'string', default: 'react' }
+          },
+          required: ['specification']
+        }
+      },
+      {
+        name: 'render_veo_video',
+        description: 'Renders high-definition MP4 video streams from text prompt descriptions or still imagery.',
+        serverName: 'Gemini & Veo Multi-Modal Synthesis MCP',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            prompt: { type: 'string' },
+            duration: { type: 'number', default: 8 },
+            aspectRatio: { type: 'string', default: '16:9' }
+          },
+          required: ['prompt']
+        }
+      }
+    ]
   }
 ];

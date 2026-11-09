@@ -20,7 +20,8 @@ import {
   Sparkles,
   PieChart as PieIcon,
   RefreshCw,
-  Film
+  Film,
+  Bot
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -329,6 +330,34 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 🤖 Agentic AI & MCP Engineer Callout */}
+      <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-teal-950/30 to-slate-900 border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-300 shrink-0">
+            <Bot className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-white">Agentic AI & Model Context Protocol (MCP)</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                AUTONOMOUS ENGINEER
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-300 mt-0.5">
+              Ask the Agentic AI to add <em>any</em> feature (Stripe payments, voice notes, PDF export, or custom tools). The agent calls MCP tools and directly injects it into your live app.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setActiveTab('agentic')}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/30 transition-all shrink-0 cursor-pointer"
+        >
+          <span>Open Agentic Studio</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* 🌟 New Feature Callout: AI Video Studio */}

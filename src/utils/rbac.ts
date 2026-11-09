@@ -28,7 +28,10 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'settings:view',
       'settings:edit',
       'video:view',
-      'video:generate'
+      'video:generate',
+      'mcp:view',
+      'mcp:execute',
+      'agent:run'
     ]
   },
   admin: {
@@ -54,7 +57,10 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'audit:view',
       'settings:view',
       'video:view',
-      'video:generate'
+      'video:generate',
+      'mcp:view',
+      'mcp:execute',
+      'agent:run'
     ]
   },
   product_manager: {
@@ -74,7 +80,9 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'audit:view',
       'users:view',
       'video:view',
-      'video:generate'
+      'video:generate',
+      'mcp:view',
+      'agent:run'
     ]
   },
   analyst: {

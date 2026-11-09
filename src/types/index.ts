@@ -30,7 +30,11 @@ export type Permission =
   | 'settings:edit'
   // Video Studio
   | 'video:view'
-  | 'video:generate';
+  | 'video:generate'
+  // MCP & Agentic AI
+  | 'mcp:view'
+  | 'mcp:execute'
+  | 'agent:run';
 
 export interface RoleInfo {
   id: Role;
@@ -189,4 +193,41 @@ export interface AIFeatureProposal {
   endpoint: string;
   implementationCodeSnippet: string;
   recommendedModel: string;
+}
+
+export interface McpTool {
+  name: string;
+  description: string;
+  serverName: string;
+  inputSchema: Record<string, any>;
+}
+
+export interface McpServer {
+  id: string;
+  name: string;
+  description: string;
+  transport: 'sse' | 'stdio' | 'websocket';
+  url: string;
+  status: 'connected' | 'offline' | 'degraded';
+  tools: McpTool[];
+  lastPing: string;
+}
+
+export interface AgentStep {
+  id: string;
+  timestamp: string;
+  type: 'thought' | 'tool_call' | 'tool_result' | 'injection';
+  toolName?: string;
+  content: string;
+  payload?: any;
+}
+
+export interface AgentTask {
+  id: string;
+  prompt: string;
+  status: 'planning' | 'executing' | 'completed' | 'failed';
+  steps: AgentStep[];
+  createdFeature?: FeatureFlag;
+  generatedCode?: string;
+  previewWidget?: string;
 }

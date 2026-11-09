@@ -11,7 +11,10 @@ import {
   Permission,
   RailwayHealthResponse,
   GeneratedVideo,
-  AIFeatureProposal
+  AIFeatureProposal,
+  McpServer,
+  AgentStep,
+  AgentTask
 } from '../types';
 import { 
   INITIAL_SERVICES, 
@@ -21,6 +24,7 @@ import {
   INITIAL_USERS, 
   INITIAL_AUDIT_LOGS,
   INITIAL_VIDEOS,
+  INITIAL_MCP_SERVERS,
   RAILWAY_APP_URL
 } from '../data/mockData';
 import { hasPermission } from '../utils/rbac';
@@ -99,6 +103,15 @@ interface AdminContextType {
     modelName: string;
   }) => Promise<GeneratedVideo>;
   deleteVideo: (id: string) => void;
+
+  // MCP & Agentic AI
+  mcpServers: McpServer[];
+  addMcpServer: (server: Omit<McpServer, 'id' | 'lastPing' | 'status'>) => void;
+  removeMcpServer: (id: string) => void;
+  executeAgenticInjection: (
+    prompt: string, 
+    onStep: (step: AgentStep) => void
+  ) => Promise<AgentTask>;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -109,7 +122,8 @@ const STORAGE_KEYS = {
   LOGS: 'selfai_admin_logs',
   ROLE: 'selfai_admin_role',
   RAILWAY_URL: 'selfai_admin_railway_url',
-  VIDEOS: 'selfai_admin_videos'
+  VIDEOS: 'selfai_admin_videos',
+  MCP_SERVERS: 'selfai_admin_mcp_servers'
 };
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -174,6 +188,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return INITIAL_VIDEOS;
   });
 
+  // Load MCP Servers
+  const [mcpServers, setMcpServers] = useState<McpServer[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.MCP_SERVERS);
+    return saved ? JSON.parse(saved) : INITIAL_MCP_SERVERS;
+  });
+
   const [services, setServices] = useState<ServiceHealth[]>(INITIAL_SERVICES);
   const [weeklyUsage] = useState<DailyUsage[]>(INITIAL_WEEKLY_USAGE);
   const [modelUsage] = useState<ModelUsage[]>(INITIAL_MODEL_BREAKDOWN);
@@ -195,6 +215,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.VIDEOS, JSON.stringify(videos));
   }, [videos]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.MCP_SERVERS, JSON.stringify(mcpServers));
+  }, [mcpServers]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ROLE, currentRole);
@@ -595,10 +619,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.removeItem(STORAGE_KEYS.ROLE);
     localStorage.removeItem(STORAGE_KEYS.RAILWAY_URL);
     localStorage.removeItem(STORAGE_KEYS.VIDEOS);
+    localStorage.removeItem(STORAGE_KEYS.MCP_SERVERS);
     setFeatures(INITIAL_FEATURE_FLAGS);
     setUsers(INITIAL_USERS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
     setVideos(INITIAL_VIDEOS);
+    setMcpServers(INITIAL_MCP_SERVERS);
     setCurrentRole('super_admin');
     setRailwayUrl(RAILWAY_APP_URL);
     addToast('info', 'Data Reset', 'All SelfAI admin demo datasets restored to initial state.');
@@ -718,6 +744,180 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     addToast('info', 'Video Removed', 'The generated video was deleted from your library.');
   };
 
+  // MCP Server Management
+  const addMcpServer = (serverData: Omit<McpServer, 'id' | 'lastPing' | 'status'>) => {
+    const newServer: McpServer = {
+      ...serverData,
+      id: `mcp-${Date.now()}`,
+      status: 'connected',
+      lastPing: 'Connected now'
+    };
+    setMcpServers((prev) => [...prev, newServer]);
+    logAudit('REGISTER_MCP_SERVER', 'system', newServer.name, `Connected MCP server via ${newServer.transport} at ${newServer.url}`);
+    addToast('success', 'MCP Server Connected', `${newServer.name} is now connected with ${newServer.tools.length} available tools.`);
+  };
+
+  const removeMcpServer = (id: string) => {
+    const target = mcpServers.find((s) => s.id === id);
+    if (!target) return;
+    setMcpServers((prev) => prev.filter((s) => s.id !== id));
+    logAudit('DISCONNECT_MCP_SERVER', 'system', target.name, `Disconnected MCP server`);
+    addToast('info', 'MCP Server Disconnected', `${target.name} has been removed.`);
+  };
+
+  // Agentic AI Autonomous Feature Injection Engine
+  const executeAgenticInjection = async (
+    prompt: string,
+    onStep: (step: AgentStep) => void
+  ): Promise<AgentTask> => {
+    const taskId = `agent-task-${Date.now()}`;
+    const cleanKey = prompt.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').substring(0, 24);
+    const titleCase = prompt.trim().replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+
+    const steps: AgentStep[] = [];
+
+    const recordStep = (step: Omit<AgentStep, 'id' | 'timestamp'>) => {
+      const fullStep: AgentStep = {
+        ...step,
+        id: `step-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      };
+      steps.push(fullStep);
+      onStep(fullStep);
+      return fullStep;
+    };
+
+    // Step 1: Autonomous Planning
+    recordStep({
+      type: 'thought',
+      content: `Received objective: "${prompt}". Initiating Autonomous Feature Engineering loop. Identifying required MCP tool pipelines for code synthesis and runtime registration.`
+    });
+
+    await new Promise((r) => setTimeout(r, 600));
+
+    // Step 2: MCP Tool Call: Inspect schema
+    recordStep({
+      type: 'tool_call',
+      toolName: 'selfai_core::inspect_app_schema',
+      payload: {
+        server: 'SelfAI Core Runtime MCP',
+        targetApp: 'https://frontend-production-0c17e.up.railway.app',
+        query: 'runtime_capabilities'
+      },
+      content: `Calling MCP Tool "inspect_app_schema" to inspect live microservices on Railway...`
+    });
+
+    await new Promise((r) => setTimeout(r, 700));
+
+    // Step 3: MCP Tool Result
+    recordStep({
+      type: 'tool_result',
+      toolName: 'selfai_core::inspect_app_schema',
+      payload: {
+        backendStatus: 'ok',
+        primaryModel: 'gemini-flash-latest',
+        databases: ['sqlite', 'chroma_rag'],
+        emailConfigured: true,
+        activeFeatureCount: features.length
+      },
+      content: `Live environment verified: SQLite database online, Chroma RAG memory active, Gemini Flash ready.`
+    });
+
+    await new Promise((r) => setTimeout(r, 800));
+
+    // Step 4: MCP Code Synthesis
+    recordStep({
+      type: 'tool_call',
+      toolName: 'gemini_synthesis::generate_app_component',
+      payload: {
+        server: 'Gemini Multi-Modal Synthesis MCP',
+        featureName: titleCase,
+        featureKey: cleanKey,
+        targetPlatform: 'React + TypeScript + TailwindCSS'
+      },
+      content: `Calling MCP Tool "generate_app_component" to synthesize production code and API route for "${titleCase}"...`
+    });
+
+    await new Promise((r) => setTimeout(r, 900));
+
+    // Step 5: Code generated
+    const generatedCode = `// Auto-synthesized by Agentic AI via MCP
+export const ${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module: React.FC = () => {
+  const [active, setActive] = useState(true);
+
+  return (
+    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-slate-200">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-white">${titleCase}</h3>
+        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">ACTIVE</span>
+      </div>
+      <p className="text-xs text-slate-400 mt-1">Autonomous feature module live on Railway app.</p>
+    </div>
+  );
+};`;
+
+    recordStep({
+      type: 'tool_result',
+      toolName: 'gemini_synthesis::generate_app_component',
+      payload: {
+        status: 'synthesized',
+        codeLines: 24,
+        exportedModule: `${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module`
+      },
+      content: `Synthesized production component and route handler for /api/${cleanKey}.`
+    });
+
+    await new Promise((r) => setTimeout(r, 700));
+
+    // Step 6: DIRECT INJECTION INTO APP
+    const newFeature: FeatureFlag = {
+      id: `feat-${cleanKey}-${Date.now()}`,
+      name: titleCase,
+      key: cleanKey,
+      description: `Autonomous feature auto-engineered and injected by Agentic AI from prompt: "${prompt}".`,
+      category: 'ai_models',
+      enabled: true,
+      rolloutPercentage: 100,
+      targetRoles: ['super_admin', 'admin', 'product_manager'],
+      environment: 'production',
+      createdBy: 'Agentic AI (Autonomous Engineer)',
+      createdAt: new Date().toISOString().split('T')[0],
+      updatedAt: new Date().toISOString().split('T')[0],
+      updatedBy: 'Agentic AI',
+      tags: ['agentic-injected', 'mcp-tool', cleanKey]
+    };
+
+    setFeatures((prev) => [newFeature, ...prev.filter((f) => f.key !== cleanKey)]);
+
+    recordStep({
+      type: 'injection',
+      toolName: 'selfai_core::inject_feature_to_app',
+      payload: {
+        featureFlag: newFeature,
+        targetAppUrl: 'https://frontend-production-0c17e.up.railway.app'
+      },
+      content: `Directly injected feature "${titleCase}" into live app runtime with 100% canary rollout!`
+    });
+
+    logAudit(
+      'AGENTIC_MCP_FEATURE_INJECTION',
+      'feature_flag',
+      newFeature.key,
+      `Autonomous Agentic AI executed MCP tool pipeline and injected feature "${titleCase}" into main app.`
+    );
+
+    addToast('success', 'Feature Injected into App!', `"${titleCase}" was autonomously synthesized and injected into Self AI.`);
+
+    return {
+      id: taskId,
+      prompt,
+      status: 'completed',
+      steps,
+      createdFeature: newFeature,
+      generatedCode
+    };
+  };
+
   return (
     <AdminContext.Provider
       value={{
@@ -761,7 +961,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         autoCreateFeatureWithAI,
         videos,
         generateVideo,
-        deleteVideo
+        deleteVideo,
+        mcpServers,
+        addMcpServer,
+        removeMcpServer,
+        executeAgenticInjection
       }}
     >
       {children}

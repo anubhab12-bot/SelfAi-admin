@@ -2,6 +2,7 @@ import React from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { 
   LayoutDashboard, 
+  Bot,
   ToggleLeft, 
   Film,
   Users, 
@@ -23,6 +24,12 @@ export const Sidebar: React.FC = () => {
       label: 'Overview & Analytics',
       icon: LayoutDashboard,
       badge: null
+    },
+    {
+      id: 'agentic',
+      label: 'Agentic AI & MCP',
+      icon: Bot,
+      badge: 'Agent'
     },
     {
       id: 'features',
