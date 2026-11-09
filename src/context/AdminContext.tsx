@@ -68,6 +68,7 @@ interface AdminContextType {
   resendInvite: (id: string) => Promise<void>;
   acceptInvite: (id: string) => void;
   sendDirectInviteEmail: (toEmail: string, toName: string, role: Role) => Promise<{ success: boolean; message: string }>;
+  refreshTeamFromBackend: () => Promise<void>;
 
   // Weekly Usage & Analytics
   weeklyUsage: DailyUsage[];
@@ -390,9 +391,43 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return { reply: reply.trim() || 'Hello! How can I help you today?', model, remaining };
   };
 
-  // Initial fetch on mount
+  // Live Team Fetcher & Sync with Railway Backend
+  const refreshTeamFromBackend = async () => {
+    try {
+      const res = await fetch(`${railwayUrl}/api/admin/team`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.users) && data.users.length > 0) {
+          setUsers(data.users);
+          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(data.users));
+        }
+      }
+    } catch (_) {}
+  };
+
+  // Sync initial local users to backend on mount
+  const syncTeamToBackend = async (currentUsers: User[]) => {
+    try {
+      await fetch(`${railwayUrl}/api/admin/team/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ users: currentUsers })
+      });
+    } catch (_) {}
+  };
+
+  // Initial fetch and real-time team polling on mount
   useEffect(() => {
     fetchLiveRailwayHealth();
+    syncTeamToBackend(users).then(() => {
+      refreshTeamFromBackend();
+    });
+
+    const interval = setInterval(() => {
+      refreshTeamFromBackend();
+    }, 3500);
+
+    return () => clearInterval(interval);
   }, [railwayUrl]);
 
   // Current active user representation
@@ -654,13 +689,19 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       lastActive: 'Never'
     };
 
-    setUsers((prev) => [...prev, newUser]);
+    setUsers((prev) => {
+      const updated = [...prev, newUser];
+      syncTeamToBackend(updated);
+      return updated;
+    });
+
     logAudit('CREATE_USER', 'user', newUser.email, `Added user ${newUser.name} with role ${newUser.role}`);
     
     // Automatically dispatch email directly from within the admin app
     sendDirectInviteEmail(newUser.email, newUser.name, newUser.role)
       .then((res) => {
         addToast('success', 'Email Sent Direct', res.message);
+        refreshTeamFromBackend();
       })
       .catch(() => {
         addToast('success', 'User Invited', `Successfully added ${newUser.name} to SelfAI organization.`);
@@ -680,12 +721,23 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const acceptInvite = (id: string) => {
+  const acceptInvite = async (idOrEmail: string) => {
+    const target = users.find((u) => u.id === idOrEmail || u.email.toLowerCase() === idOrEmail.toLowerCase());
+    const email = target?.email || idOrEmail;
+
+    try {
+      await fetch(`${railwayUrl}/api/admin/team/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+    } catch (_) {}
+
     setUsers((prev) =>
       prev.map((u) => {
-        if (u.id === id) {
-          logAudit('ACCEPT_INVITATION', 'user', u.email, `User accepted invitation and completed Google authentication`);
-          addToast('success', 'Invitation Accepted', `${u.name} (${u.email}) is now verified and active.`);
+        if (u.id === idOrEmail || u.email.toLowerCase() === email.toLowerCase()) {
+          logAudit('ACCEPT_INVITATION', 'user', u.email, `User accepted invitation and completed verification`);
+          addToast('success', 'Invitation Accepted', `${u.name} (${u.email}) is now verified and ACTIVE.`);
           return { ...u, status: 'active', lastActive: 'Active now' };
         }
         return u;
@@ -693,7 +745,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
   };
 
-  const deleteUser = (id: string) => {
+  const deleteUser = async (id: string) => {
     if (!can('users:delete')) {
       addToast('error', 'Access Denied', `Role "${currentRole}" cannot delete users.`);
       return;
@@ -701,6 +753,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     const target = users.find((u) => u.id === id);
     if (!target) return;
+
+    try {
+      await fetch(`${railwayUrl}/api/admin/team/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: target.email })
+      });
+    } catch (_) {}
 
     setUsers((prev) => prev.filter((u) => u.id !== id));
     logAudit('DELETE_USER', 'user', target.email, `Deleted user account ${target.name}`);
@@ -1095,6 +1155,7 @@ export const ${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module: React.FC = () => {
         resendInvite,
         acceptInvite,
         sendDirectInviteEmail,
+        refreshTeamFromBackend,
         weeklyUsage,
         modelUsage,
         timeRange,

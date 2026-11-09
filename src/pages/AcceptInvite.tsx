@@ -3,10 +3,11 @@ import { useAdmin } from '../context/AdminContext';
 import { ShieldCheck, Sparkles, CheckCircle2, ArrowRight, Lock } from 'lucide-react';
 
 export const AcceptInvite: React.FC = () => {
-  const { users, acceptInvite, setActiveTab, addToast } = useAdmin();
+  const { users, acceptInvite, setActiveTab, addToast, railwayUrl } = useAdmin();
   const [inviteEmail, setInviteEmail] = useState<string>('');
   const [targetUser, setTargetUser] = useState<any>(null);
   const [isAccepted, setIsAccepted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Parse email from URL query or hash: e.g. #/accept-invite?email=...
@@ -17,30 +18,58 @@ export const AcceptInvite: React.FC = () => {
 
     if (emailParam) {
       setInviteEmail(emailParam);
+      // Check local users
       const user = users.find((u) => u.email.toLowerCase() === emailParam.toLowerCase());
       if (user) {
         setTargetUser(user);
       }
-    }
-  }, [users]);
 
-  const handleAccept = () => {
+      // Also query live Railway backend for user details
+      fetch(`${railwayUrl}/api/admin/team`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data?.users)) {
+            const remoteUser = data.users.find((u: any) => u.email.toLowerCase() === emailParam.toLowerCase());
+            if (remoteUser) {
+              setTargetUser(remoteUser);
+              if (remoteUser.status === 'active') {
+                setIsAccepted(true);
+              }
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [users, railwayUrl]);
+
+  const handleAccept = async () => {
+    setIsSubmitting(true);
+    const emailToAccept = inviteEmail || targetUser?.email;
+
+    try {
+      // 1. Notify Railway backend cloud server so status is updated globally in database
+      await fetch(`${railwayUrl}/api/admin/team/accept`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToAccept }),
+      });
+    } catch (err) {
+      console.warn('Backend acceptance sync failed:', err);
+    }
+
+    // 2. Update local state
     if (targetUser) {
       acceptInvite(targetUser.id);
-      setIsAccepted(true);
-      addToast('success', 'Invitation Accepted!', `Welcome to Self AI Admin, ${targetUser.name}!`);
-      setTimeout(() => {
-        window.location.hash = '#dashboard';
-        setActiveTab('dashboard');
-      }, 1500);
-    } else {
-      setIsAccepted(true);
-      addToast('success', 'Welcome!', 'Invitation verified. Redirecting to dashboard...');
-      setTimeout(() => {
-        window.location.hash = '#dashboard';
-        setActiveTab('dashboard');
-      }, 1500);
+    } else if (emailToAccept) {
+      acceptInvite(emailToAccept);
     }
+
+    setIsAccepted(true);
+    addToast('success', 'Invitation Accepted!', `Welcome to Self AI Admin! Access granted.`);
+    setTimeout(() => {
+      window.location.hash = '#dashboard';
+      setActiveTab('dashboard');
+    }, 1500);
   };
 
   return (

@@ -26,6 +26,7 @@ export const RbacUsers: React.FC = () => {
     resendInvite,
     acceptInvite,
     sendDirectInviteEmail,
+    refreshTeamFromBackend,
     can, 
     currentUser,
     addToast 
@@ -107,15 +108,30 @@ export const RbacUsers: React.FC = () => {
           </p>
         </div>
 
-        {can('users:create') && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsInviteModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+            onClick={async () => {
+              addToast('info', 'Syncing Status', 'Fetching live team verification status from Railway...');
+              await refreshTeamFromBackend();
+              addToast('success', 'Status Synced', 'Live team status updated.');
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-semibold border border-slate-700/60 transition-all cursor-pointer"
+            title="Refresh team status from live Railway server"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>+ Invite New Admin</span>
+            <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Sync Live Status</span>
           </button>
-        )}
+
+          {can('users:create') && (
+            <button
+              onClick={() => setIsInviteModalOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>+ Invite New Admin</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 💡 Plain-English Explanation: Direct Email Dispatch */}
