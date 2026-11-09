@@ -231,3 +231,67 @@ export interface AgentTask {
   generatedCode?: string;
   previewWidget?: string;
 }
+
+// User Tracing & Telemetry
+export interface UserSessionTrace {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userAvatar: string;
+  isPremium: boolean;
+  tier: 'free' | 'pro' | 'power';
+  city: string;
+  country: string;
+  countryCode: string;
+  flag: string;
+  ipAddress: string;
+  device: string;
+  os: string;
+  browser: string;
+  status: 'online' | 'idle' | 'offline';
+  sessionDurationMinutes: number;
+  totalTimeSpentHours: number;
+  queriesToday: number;
+  lastActive: string;
+  favoriteFeature: string;
+}
+
+// Feature Popularity for Dashboard Pie Chart
+export interface FeaturePopularity {
+  name: string;
+  key: string;
+  queryCount: number;
+  percentage: number;
+  color: string;
+}
+
+// Payments & Premium Subscriptions
+export interface PaymentTransaction {
+  id: string;
+  transactionRef: string;
+  customerName: string;
+  customerEmail: string;
+  customerAvatar: string;
+  planName: string;
+  tier: 'pro' | 'power';
+  amount: number;
+  currency: string;
+  billingCycle: 'monthly' | 'yearly';
+  paymentMethod: string;
+  status: 'paid' | 'refunded' | 'failed';
+  date: string;
+  invoiceId: string;
+}
+
+// Paywall & Daily Quota Rules
+export interface PaywallConfig {
+  freeDailyQueryLimit: number;
+  freeDailyMinutesLimit: number;
+  premiumPriceMonthlyINR: number;
+  premiumPriceYearlyINR: number;
+  premiumFeatureKeys: string[]; // Keys restricted to Pro
+  allowGuestTrial: boolean;
+  guestDailyLimit: number;
+  updatedAt: string;
+}

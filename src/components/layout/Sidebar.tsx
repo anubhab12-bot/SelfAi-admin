@@ -10,7 +10,9 @@ import {
   FileText,
   Settings, 
   Sparkles,
-  ExternalLink
+  ExternalLink,
+  Globe,
+  CreditCard
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -24,6 +26,18 @@ export const Sidebar: React.FC = () => {
       label: 'Overview & Analytics',
       icon: LayoutDashboard,
       badge: null
+    },
+    {
+      id: 'telemetry',
+      label: 'User Telemetry & Locations',
+      icon: Globe,
+      badge: 'Live'
+    },
+    {
+      id: 'billing',
+      label: 'Payments & Paywalls',
+      icon: CreditCard,
+      badge: '₹ Pro'
     },
     {
       id: 'features',

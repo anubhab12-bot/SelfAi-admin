@@ -21,7 +21,10 @@ import {
   PieChart as PieIcon,
   RefreshCw,
   Film,
-  Bot
+  Bot,
+  Globe,
+  Crown,
+  Heart
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -39,6 +42,7 @@ export const Dashboard: React.FC = () => {
   const { 
     weeklyUsage, 
     modelUsage,
+    featurePopularity,
     features, 
     can, 
     setActiveTab, 
@@ -332,7 +336,141 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Interactive Live AI Query Tester Console */}
+      {/* 4. Most Used Features (User Favorites) Donut / Pie Chart */}
+      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400">
+                <Heart className="w-3.5 h-3.5 fill-pink-500/30" />
+              </div>
+              <h3 className="text-sm font-bold text-white tracking-tight">Most Used Features (User Favorites)</h3>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                Live Analytics
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Visual breakdown of which app features receive the most queries and engagement from active users.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('telemetry')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 text-indigo-300 hover:text-indigo-200 text-xs font-semibold border border-slate-700 transition-all cursor-pointer"
+            >
+              <Globe className="w-3.5 h-3.5 text-indigo-400" />
+              <span>User Telemetry & Locations</span>
+              <ArrowRight className="w-3 h-3 ml-0.5" />
+            </button>
+            <button
+              onClick={() => setActiveTab('billing')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-xs font-semibold border border-indigo-500/30 transition-all cursor-pointer"
+            >
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <span>Paywall Rules</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Donut Chart (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col items-center justify-center">
+            <div className="h-56 w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={featurePopularity}
+                    dataKey="percentage"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={80}
+                    paddingAngle={4}
+                  >
+                    {featurePopularity.map((entry, index) => (
+                      <Cell key={`feat-cell-${index}`} fill={entry.color} stroke="#0f172a" strokeWidth={2} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0f172a',
+                      borderColor: '#334155',
+                      borderRadius: '0.75rem',
+                      fontSize: '12px'
+                    }}
+                    formatter={(val: number, name: string) => [`${val}% of total user requests`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              {/* Centered Total Pill */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-xl font-black text-white font-mono">
+                  {Math.round(featurePopularity.reduce((acc, f) => acc + f.queryCount, 0) / 1000)}k
+                </span>
+                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                  Total Queries
+                </span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 text-center mt-1">
+              Top #1 Favorite: <strong className="text-indigo-300">Self AI Core Chat (46.2%)</strong>
+            </p>
+          </div>
+
+          {/* Breakdown Bars & Details (7 cols) */}
+          <div className="lg:col-span-7 space-y-3">
+            {featurePopularity.map((feat, idx) => (
+              <div
+                key={feat.key}
+                className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-all"
+              >
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-500 font-mono w-4">#{idx + 1}</span>
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: feat.color }} />
+                    <span className="font-semibold text-slate-200">{feat.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-slate-400 text-[11px]">
+                      {feat.queryCount.toLocaleString()} queries
+                    </span>
+                    <span className="font-bold text-white font-mono text-xs w-12 text-right">
+                      {feat.percentage}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Visual Progress Bar */}
+                <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${feat.percentage}%`,
+                      backgroundColor: feat.color
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+
+            <div className="p-3 rounded-xl bg-indigo-950/30 border border-indigo-500/20 flex items-center justify-between text-xs text-slate-300 mt-2">
+              <span className="text-[11px] text-slate-300">
+                💡 <strong>Admin Tip:</strong> Gating AI Image Studio & Document RAG to Pro converts free users at a 4.8x higher rate.
+              </span>
+              <button
+                onClick={() => setActiveTab('billing')}
+                className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 shrink-0 ml-2 cursor-pointer"
+              >
+                Configure Paywall →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Interactive Live AI Query Tester Console */}
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">

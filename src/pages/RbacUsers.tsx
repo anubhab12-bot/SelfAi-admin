@@ -232,9 +232,15 @@ export const RbacUsers: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Authorized Team Members & Invitations ({users.length})
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Authorized Team Members & Invitations ({users.length})
+            </h3>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Live Auto-Sync Active</span>
+            </div>
+          </div>
           <span className="text-[11px] text-slate-500 font-mono">
             {users.filter(u => u.status === 'active').length} Active • {users.filter(u => u.status === 'pending').length} Pending Consent
           </span>

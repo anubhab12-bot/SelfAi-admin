@@ -14,7 +14,11 @@ import {
   AIFeatureProposal,
   McpServer,
   AgentStep,
-  AgentTask
+  AgentTask,
+  UserSessionTrace,
+  FeaturePopularity,
+  PaymentTransaction,
+  PaywallConfig
 } from '../types';
 import { 
   INITIAL_SERVICES, 
@@ -25,6 +29,10 @@ import {
   INITIAL_AUDIT_LOGS,
   INITIAL_VIDEOS,
   INITIAL_MCP_SERVERS,
+  INITIAL_USER_TRACES,
+  INITIAL_FEATURE_POPULARITY,
+  INITIAL_PAYMENTS,
+  INITIAL_PAYWALL_CONFIG,
   RAILWAY_APP_URL
 } from '../data/mockData';
 import { hasPermission } from '../utils/rbac';
@@ -106,14 +114,18 @@ interface AdminContextType {
   }) => Promise<GeneratedVideo>;
   deleteVideo: (id: string) => void;
 
-  // MCP & Agentic AI
-  mcpServers: McpServer[];
-  addMcpServer: (server: Omit<McpServer, 'id' | 'lastPing' | 'status'>) => void;
-  removeMcpServer: (id: string) => void;
-  executeAgenticInjection: (
-    prompt: string, 
-    onStep: (step: AgentStep) => void
-  ) => Promise<AgentTask>;
+  // User Tracing & Telemetry
+  userTraces: UserSessionTrace[];
+  refreshUserTraces: () => void;
+
+  // Feature Popularity
+  featurePopularity: FeaturePopularity[];
+
+  // Payments & Paywall Controls
+  payments: PaymentTransaction[];
+  paywallConfig: PaywallConfig;
+  updatePaywallConfig: (updates: Partial<PaywallConfig>) => void;
+  toggleFeaturePremium: (featureKey: string) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -125,7 +137,9 @@ const STORAGE_KEYS = {
   ROLE: 'selfai_admin_role',
   RAILWAY_URL: 'selfai_admin_railway_url',
   VIDEOS: 'selfai_admin_videos',
-  MCP_SERVERS: 'selfai_admin_mcp_servers'
+  MCP_SERVERS: 'selfai_admin_mcp_servers',
+  PAYWALL_CONFIG: 'selfai_admin_paywall_config',
+  PAYMENTS: 'selfai_admin_payments'
 };
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -206,6 +220,65 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [weeklyUsage] = useState<DailyUsage[]>(INITIAL_WEEKLY_USAGE);
   const [modelUsage] = useState<ModelUsage[]>(INITIAL_MODEL_BREAKDOWN);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  // User Session Tracing & Feature Popularity
+  const [userTraces, setUserTraces] = useState<UserSessionTrace[]>(INITIAL_USER_TRACES);
+  const [featurePopularity] = useState<FeaturePopularity[]>(INITIAL_FEATURE_POPULARITY);
+
+  // Payments Received & Transaction History
+  const [payments, setPayments] = useState<PaymentTransaction[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.PAYMENTS);
+    return saved ? JSON.parse(saved) : INITIAL_PAYMENTS;
+  });
+
+  // Paywall & Daily Quota Rules
+  const [paywallConfig, setPaywallConfig] = useState<PaywallConfig>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.PAYWALL_CONFIG);
+    return saved ? JSON.parse(saved) : INITIAL_PAYWALL_CONFIG;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(payments));
+  }, [payments]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.PAYWALL_CONFIG, JSON.stringify(paywallConfig));
+  }, [paywallConfig]);
+
+  const updatePaywallConfig = (updates: Partial<PaywallConfig>) => {
+    setPaywallConfig((prev) => {
+      const updated = {
+        ...prev,
+        ...updates,
+        updatedAt: new Date().toISOString().split('T')[0]
+      };
+      addToast('success', 'Paywall Rules Saved', 'Free daily quotas and feature tier restrictions updated.');
+      return updated;
+    });
+  };
+
+  const toggleFeaturePremium = (featureKey: string) => {
+    setPaywallConfig((prev) => {
+      const keys = prev.premiumFeatureKeys.includes(featureKey)
+        ? prev.premiumFeatureKeys.filter((k) => k !== featureKey)
+        : [...prev.premiumFeatureKeys, featureKey];
+      const isNowPremium = keys.includes(featureKey);
+      addToast(
+        'info',
+        'Tier Setting Changed',
+        `"${featureKey}" is now set to ${isNowPremium ? 'PREMIUM (Pro Members Only)' : 'FREE for everyone'}.`
+      );
+      return { ...prev, premiumFeatureKeys: keys };
+    });
+  };
+
+  const refreshUserTraces = () => {
+    // Simulate real-time heartbeat update
+    setUserTraces((prev) =>
+      prev.map((t) => (t.status === 'online' ? { ...t, queriesToday: t.queriesToday + 1, sessionDurationMinutes: t.sessionDurationMinutes + 1 } : t))
+    );
+    addToast('info', 'Telemetry Synced', 'Live user sessions, geolocations, and activity refreshed.');
+  };
 
   // Sync features list directly to Railway Backend so the main app always matches Admin
   const syncFeaturesToRailway = async (feats: FeatureFlag[]) => {
@@ -391,15 +464,28 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return { reply: reply.trim() || 'Hello! How can I help you today?', model, remaining };
   };
 
-  // Live Team Fetcher & Sync with Railway Backend
+  // Live Team Fetcher & Real-Time Sync with Railway Backend
   const refreshTeamFromBackend = async () => {
     try {
       const res = await fetch(`${railwayUrl}/api/admin/team`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data?.users) && data.users.length > 0) {
-          setUsers(data.users);
-          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(data.users));
+          setUsers((prevUsers) => {
+            // Automatically alert when a user accepts in real-time
+            for (const newUser of data.users) {
+              const old = prevUsers.find((p) => p.email.toLowerCase() === newUser.email.toLowerCase());
+              if (old && old.status === 'pending' && newUser.status === 'active') {
+                addToast(
+                  'success',
+                  'Team Invitation Accepted!',
+                  `🎉 ${newUser.name || newUser.email} has accepted their invitation and is now ACTIVE.`
+                );
+              }
+            }
+            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(data.users));
+            return data.users;
+          });
         }
       }
     } catch (_) {}
@@ -416,18 +502,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (_) {}
   };
 
-  // Initial fetch and real-time team polling on mount
+  // Initial fetch and continuous real-time live sync
   useEffect(() => {
     fetchLiveRailwayHealth();
-    syncTeamToBackend(users).then(() => {
-      refreshTeamFromBackend();
+
+    // Immediately load live cloud team state
+    refreshTeamFromBackend().then(() => {
+      syncTeamToBackend(users);
     });
 
+    // Real-time automatic polling every 2 seconds (no manual refresh needed)
     const interval = setInterval(() => {
       refreshTeamFromBackend();
-    }, 3500);
+    }, 2000);
 
-    return () => clearInterval(interval);
+    // Instantly sync when switching back to tab
+    const handleFocus = () => refreshTeamFromBackend();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshTeamFromBackend();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [railwayUrl]);
 
   // Current active user representation
@@ -1171,10 +1275,13 @@ export const ${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module: React.FC = () => {
         videos,
         generateVideo,
         deleteVideo,
-        mcpServers,
-        addMcpServer,
-        removeMcpServer,
-        executeAgenticInjection
+        userTraces,
+        refreshUserTraces,
+        featurePopularity,
+        payments,
+        paywallConfig,
+        updatePaywallConfig,
+        toggleFeaturePremium
       }}
     >
       {children}

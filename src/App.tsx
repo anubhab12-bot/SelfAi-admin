@@ -4,7 +4,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToastContainer } from './components/layout/ToastContainer';
 
-// All 7 Rich & Intuitive Pages
+// All Rich & Intuitive Pages
 import { Dashboard } from './pages/Dashboard';
 import { FeatureControl } from './pages/FeatureControl';
 import { RbacUsers } from './pages/RbacUsers';
@@ -12,6 +12,8 @@ import { SystemMonitoring } from './pages/SystemMonitoring';
 import { AuditLogs } from './pages/AuditLogs';
 import { Settings } from './pages/Settings';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { UserTracking } from './pages/UserTracking';
+import { PaywallBilling } from './pages/PaywallBilling';
 
 const AppContent: React.FC = () => {
   const { activeTab } = useAdmin();
@@ -42,6 +44,10 @@ const AppContent: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
+      case 'telemetry':
+        return <UserTracking />;
+      case 'billing':
+        return <PaywallBilling />;
       case 'features':
         return <FeatureControl />;
       case 'team':
