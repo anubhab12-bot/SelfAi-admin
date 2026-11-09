@@ -12,9 +12,32 @@ import { RbacUsers } from './pages/RbacUsers';
 import { SystemMonitoring } from './pages/SystemMonitoring';
 import { AuditLogs } from './pages/AuditLogs';
 import { Settings } from './pages/Settings';
+import { AcceptInvite } from './pages/AcceptInvite';
 
 const AppContent: React.FC = () => {
   const { activeTab } = useAdmin();
+  const [isAcceptInviteRoute, setIsAcceptInviteRoute] = React.useState(() => {
+    return window.location.hash.includes('accept-invite') || window.location.search.includes('accept-invite');
+  });
+
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      setIsAcceptInviteRoute(
+        window.location.hash.includes('accept-invite') || window.location.search.includes('accept-invite')
+      );
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  if (isAcceptInviteRoute) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center selection:bg-indigo-500 selection:text-white">
+        <AcceptInvite />
+        <ToastContainer />
+      </div>
+    );
+  }
 
   const renderActivePage = () => {
     switch (activeTab) {

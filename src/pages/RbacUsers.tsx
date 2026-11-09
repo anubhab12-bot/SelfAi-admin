@@ -38,6 +38,40 @@ export const RbacUsers: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<Role>('admin');
   const [showHowItWorks, setShowHowItWorks] = useState(true);
 
+  const openGmailCompose = (recipientEmail: string, recipientName: string, role: string) => {
+    const subject = encodeURIComponent(`Invitation to join Self AI Admin as an ${role.toUpperCase()}`);
+    const inviteLink = `https://anubhab12-bot.github.io/SelfAi-admin/#/accept-invite?email=${encodeURIComponent(recipientEmail)}`;
+    const body = encodeURIComponent(
+`Hi ${recipientName || 'there'},
+
+Anubhab Nandi (anubhabnandi12@gmail.com) has invited you to join the Self AI Admin Portal as an ${role.toUpperCase()}.
+
+To accept this invitation and activate your account, please click the verification link below:
+${inviteLink}
+
+Role Details:
+- Assigned Role: ${role.toUpperCase()}
+- App Platform: Self AI (https://frontend-production-0c17e.up.railway.app)
+- Scope: AI feature controls, health telemetry, and model management
+
+If you did not expect this invitation, you can safely ignore this email.
+
+Best regards,
+Self AI Engineering Team`
+    );
+
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipientEmail)}&su=${subject}&body=${body}`;
+    window.open(gmailUrl, '_blank');
+    addToast('info', 'Gmail Compose Opened', `Click "Send" in your Gmail tab to deliver the email to ${recipientEmail}.`);
+  };
+
+  const copyFullInviteMessage = (email: string, name: string, role: string) => {
+    const inviteLink = `https://anubhab12-bot.github.io/SelfAi-admin/#/accept-invite?email=${encodeURIComponent(email)}`;
+    const message = `Hi ${name || 'there'},\n\nAnubhab Nandi has invited you to join the Self AI Admin Portal as an ${role.toUpperCase()}.\n\nClick here to verify and accept your invitation:\n${inviteLink}\n\nSelf AI App: https://frontend-production-0c17e.up.railway.app`;
+    navigator.clipboard.writeText(message);
+    addToast('success', 'Invite Message Copied', `Complete formatted invitation copied! You can paste and send it via WhatsApp, Telegram, or Email.`);
+  };
+
   const handleInviteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteName.trim() || !inviteEmail.trim()) {
@@ -57,7 +91,10 @@ export const RbacUsers: React.FC = () => {
       inviteToken: Math.random().toString(36).substring(2, 12)
     });
 
-    addToast('success', 'Invitation Dispatched', `Consent email sent to ${inviteEmail}. Access remains blocked until accepted.`);
+    // Automatically open Gmail compose tab for instant real delivery
+    openGmailCompose(inviteEmail, inviteName, inviteRole);
+
+    addToast('success', 'Invitation Created & Gmail Opened', `Click "Send" in your Gmail tab to deliver the email to ${inviteEmail}.`);
     setIsInviteModalOpen(false);
     setInviteName('');
     setInviteEmail('');
@@ -178,7 +215,17 @@ export const RbacUsers: React.FC = () => {
       </div>
 
       {/* Team Directory Table */}
-      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+        {/* Real Email Dispatch Notice */}
+        <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+          <div className="flex items-center gap-2.5 text-indigo-200">
+            <Mail className="w-4 h-4 shrink-0 text-indigo-400" />
+            <span>
+              <strong>How to deliver the email:</strong> Click <strong className="text-white underline">"Send via Gmail"</strong> next to any pending invitation below. This opens your Gmail with the official invitation pre-filled and sent directly from <code className="text-indigo-300">anubhabnandi12@gmail.com</code> so it arrives directly in their primary inbox.
+            </span>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Authorized Team Members & Invitations ({users.length})
@@ -241,27 +288,29 @@ export const RbacUsers: React.FC = () => {
 
                   {/* Actions for Pending Users */}
                   {isPending && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <button
-                        onClick={() => resendInvite(user.id)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-medium border border-slate-700 transition-colors"
-                        title="Resend verification email to their Gmail"
+                        onClick={() => openGmailCompose(user.email, user.name, user.role)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm shadow-indigo-600/30 transition-all cursor-pointer"
+                        title="Open Gmail compose tab to send this invitation immediately"
                       >
-                        Resend
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>Send via Gmail</span>
                       </button>
 
                       <button
-                        onClick={() => copyInviteLink(user.email)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-medium border border-slate-700 transition-colors"
-                        title="Copy direct verification link"
+                        onClick={() => copyFullInviteMessage(user.email, user.name, user.role)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 text-slate-300 text-xs font-medium border border-slate-700 transition-colors cursor-pointer"
+                        title="Copy formatted invitation message for WhatsApp, Telegram, or Gmail"
                       >
-                        Copy Link
+                        <Copy className="w-3 h-3" />
+                        <span>Copy Message</span>
                       </button>
 
                       {/* Test simulation button so admin can test recipient acceptance */}
                       <button
                         onClick={() => acceptInvite(user.id)}
-                        className="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/30 text-xs font-semibold border border-emerald-500/30 transition-colors"
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/30 text-xs font-semibold border border-emerald-500/30 transition-colors cursor-pointer"
                         title="Simulate recipient clicking 'Accept Invitation' in their Gmail"
                       >
                         Simulate Accept
