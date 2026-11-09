@@ -1,4 +1,4 @@
-import { FeatureFlag, User, ServiceHealth, DailyUsage, ModelUsage, AuditLogItem } from '../types';
+import { FeatureFlag, User, ServiceHealth, DailyUsage, ModelUsage, AuditLogItem, GeneratedVideo } from '../types';
 
 export const RAILWAY_APP_URL = 'https://frontend-production-0c17e.up.railway.app';
 
@@ -281,6 +281,65 @@ export const INITIAL_FEATURE_FLAGS: FeatureFlag[] = [
     updatedAt: '2026-11-09',
     updatedBy: 'Anubhab Nandi',
     tags: ['news', 'docs', 'summarizer']
+  },
+  {
+    id: 'feat-video',
+    name: 'AI Video Studio (Text & Image to Video)',
+    key: 'video_generation_engine',
+    description: 'Autonomous Text-to-Video & Image-to-Video synthesis powered by Google Veo & Stable Video Diffusion models.',
+    category: 'ai_models',
+    enabled: true,
+    rolloutPercentage: 100,
+    targetRoles: ['super_admin', 'admin', 'product_manager'],
+    environment: 'production',
+    createdBy: 'Anubhab Nandi',
+    createdAt: '2026-11-09',
+    updatedAt: '2026-11-09',
+    updatedBy: 'Anubhab Nandi',
+    tags: ['video', 'text-to-video', 'image-to-video', 'veo', 'synthesis']
+  }
+];
+
+export const INITIAL_VIDEOS: GeneratedVideo[] = [
+  {
+    id: 'vid-1',
+    title: 'Futuristic Cyberpunk Metropolis in Rain',
+    type: 'text_to_video',
+    prompt: 'Cinematic hyperlapse of neon glowing cyberpunk skyscrapers, flying vehicles, rainy night reflections, 8k resolution, photorealistic.',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80',
+    aspectRatio: '16:9',
+    durationSeconds: 8,
+    modelName: 'Google Veo 2 (Gemini Video Synthesis)',
+    createdAt: '10 mins ago',
+    status: 'completed'
+  },
+  {
+    id: 'vid-2',
+    title: 'Celestial Nebula & Cosmic Voyage',
+    type: 'text_to_video',
+    prompt: 'Slow cinematic dolly zoom through a glowing purple and turquoise cosmic nebula with orbiting starlight particles and distant galaxy.',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80',
+    aspectRatio: '16:9',
+    durationSeconds: 10,
+    modelName: 'Google Veo 2 Ultra',
+    createdAt: '45 mins ago',
+    status: 'completed'
+  },
+  {
+    id: 'vid-3',
+    title: 'Mountain Lake Sunrise Drone Glide',
+    type: 'image_to_video',
+    prompt: 'Dynamic camera pan forward across misty alpine lake with reflection of snowcapped peaks at golden hour.',
+    sourceImageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80',
+    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80',
+    aspectRatio: '16:9',
+    durationSeconds: 6,
+    modelName: 'Stable Video Diffusion (SVD-XT)',
+    createdAt: '2 hours ago',
+    status: 'completed'
   }
 ];
 

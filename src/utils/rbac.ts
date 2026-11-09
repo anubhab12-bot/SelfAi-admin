@@ -26,7 +26,9 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'system:restart_services',
       'audit:view',
       'settings:view',
-      'settings:edit'
+      'settings:edit',
+      'video:view',
+      'video:generate'
     ]
   },
   admin: {
@@ -50,7 +52,9 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'users:suspend',
       'system:view',
       'audit:view',
-      'settings:view'
+      'settings:view',
+      'video:view',
+      'video:generate'
     ]
   },
   product_manager: {
@@ -68,7 +72,9 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'features:edit',
       'features:toggle',
       'audit:view',
-      'users:view'
+      'users:view',
+      'video:view',
+      'video:generate'
     ]
   },
   analyst: {
@@ -82,7 +88,8 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'analytics:view',
       'analytics:export',
       'features:view',
-      'audit:view'
+      'audit:view',
+      'video:view'
     ]
   },
   support: {
@@ -95,7 +102,8 @@ export const ROLE_DEFINITIONS: Record<Role, RoleInfo> = {
       'features:view',
       'users:view',
       'system:view',
-      'audit:view'
+      'audit:view',
+      'video:view'
     ]
   }
 };

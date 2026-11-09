@@ -9,7 +9,9 @@ import {
   AuditLogItem, 
   ToastMessage,
   Permission,
-  RailwayHealthResponse
+  RailwayHealthResponse,
+  GeneratedVideo,
+  AIFeatureProposal
 } from '../types';
 import { 
   INITIAL_SERVICES, 
@@ -18,6 +20,7 @@ import {
   INITIAL_FEATURE_FLAGS, 
   INITIAL_USERS, 
   INITIAL_AUDIT_LOGS,
+  INITIAL_VIDEOS,
   RAILWAY_APP_URL
 } from '../data/mockData';
 import { hasPermission } from '../utils/rbac';
@@ -81,6 +84,21 @@ interface AdminContextType {
 
   // Reset
   resetAllData: () => void;
+
+  // AI Feature Synthesizer / Auto-Creator
+  autoCreateFeatureWithAI: (prompt: string) => Promise<AIFeatureProposal>;
+
+  // AI Video Studio
+  videos: GeneratedVideo[];
+  generateVideo: (data: {
+    type: 'text_to_video' | 'image_to_video';
+    prompt: string;
+    sourceImageUrl?: string;
+    aspectRatio: '16:9' | '9:16' | '1:1';
+    durationSeconds: number;
+    modelName: string;
+  }) => Promise<GeneratedVideo>;
+  deleteVideo: (id: string) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -90,7 +108,8 @@ const STORAGE_KEYS = {
   USERS: 'selfai_admin_users',
   LOGS: 'selfai_admin_logs',
   ROLE: 'selfai_admin_role',
-  RAILWAY_URL: 'selfai_admin_railway_url'
+  RAILWAY_URL: 'selfai_admin_railway_url',
+  VIDEOS: 'selfai_admin_videos'
 };
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -136,6 +155,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
   });
 
+  // Load videos
+  const [videos, setVideos] = useState<GeneratedVideo[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.VIDEOS);
+    return saved ? JSON.parse(saved) : INITIAL_VIDEOS;
+  });
+
   const [services, setServices] = useState<ServiceHealth[]>(INITIAL_SERVICES);
   const [weeklyUsage] = useState<DailyUsage[]>(INITIAL_WEEKLY_USAGE);
   const [modelUsage] = useState<ModelUsage[]>(INITIAL_MODEL_BREAKDOWN);
@@ -153,6 +178,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(auditLogs));
   }, [auditLogs]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.VIDEOS, JSON.stringify(videos));
+  }, [videos]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ROLE, currentRole);
@@ -552,12 +581,132 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.removeItem(STORAGE_KEYS.LOGS);
     localStorage.removeItem(STORAGE_KEYS.ROLE);
     localStorage.removeItem(STORAGE_KEYS.RAILWAY_URL);
+    localStorage.removeItem(STORAGE_KEYS.VIDEOS);
     setFeatures(INITIAL_FEATURE_FLAGS);
     setUsers(INITIAL_USERS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
+    setVideos(INITIAL_VIDEOS);
     setCurrentRole('super_admin');
     setRailwayUrl(RAILWAY_APP_URL);
     addToast('info', 'Data Reset', 'All SelfAI admin demo datasets restored to initial state.');
+  };
+
+  // AI Feature Synthesizer / Auto-Creator
+  const autoCreateFeatureWithAI = async (prompt: string): Promise<AIFeatureProposal> => {
+    const lower = prompt.toLowerCase();
+    let proposal: AIFeatureProposal;
+
+    if (lower.includes('video') || lower.includes('animation') || lower.includes('clip')) {
+      proposal = {
+        name: 'AI Video Studio (Text & Image to Video)',
+        key: 'video_generation_engine',
+        description: 'Autonomous Text-to-Video & Image-to-Video pipeline with camera motion direction and next-gen synthesis.',
+        category: 'ai_models',
+        rolloutPercentage: 100,
+        targetRoles: ['super_admin', 'admin', 'product_manager'],
+        endpoint: '/api/video/generate',
+        recommendedModel: 'Google Veo 2 / Stable Video Diffusion (SVD-XT)',
+        implementationCodeSnippet: `// Auto-Synthesized Endpoint\napp.post('/api/video/generate', async (req, res) => {\n  const { prompt, sourceImageUrl, aspectRatio, duration } = req.body;\n  const videoJob = await videoClient.generate({\n    prompt,\n    image: sourceImageUrl,\n    ratio: aspectRatio || '16:9',\n    duration: duration || 8\n  });\n  res.json({ status: 'completed', videoUrl: videoJob.url });\n});`
+      };
+    } else if (lower.includes('voice') || lower.includes('speech') || lower.includes('audio') || lower.includes('whisper')) {
+      proposal = {
+        name: 'Neural Voice & Speech Synthesizer',
+        key: 'neural_voice_engine',
+        description: 'Real-time text-to-speech voice generation and Whisper speech-to-text audio transcription pipeline.',
+        category: 'ai_models',
+        rolloutPercentage: 100,
+        targetRoles: ['super_admin', 'admin', 'product_manager', 'support'],
+        endpoint: '/api/audio/synthesize',
+        recommendedModel: 'OpenAI Whisper-Large-v3 + ElevenLabs Neural Voice',
+        implementationCodeSnippet: `// Auto-Synthesized Audio Endpoint\napp.post('/api/audio/synthesize', async (req, res) => {\n  const { text, voiceId } = req.body;\n  const audioBuffer = await speechClient.synthesize(text, { voiceId });\n  res.type('audio/mp3').send(audioBuffer);\n});`
+      };
+    } else if (lower.includes('search') || lower.includes('research') || lower.includes('browse') || lower.includes('web')) {
+      proposal = {
+        name: 'Autonomous Web Research & Fact-Checker',
+        key: 'deep_web_research',
+        description: 'Multi-step autonomous web research engine fetching live citations, verifying facts, and summarizing sources.',
+        category: 'integrations',
+        rolloutPercentage: 80,
+        targetRoles: ['super_admin', 'admin', 'analyst'],
+        endpoint: '/api/research/query',
+        recommendedModel: 'Gemini Search Grounding Engine',
+        implementationCodeSnippet: `// Auto-Synthesized Web Search Route\napp.post('/api/research/query', async (req, res) => {\n  const { query } = req.body;\n  const research = await searchAgent.investigate(query);\n  res.json({ summary: research.text, citations: research.sources });\n});`
+      };
+    } else {
+      const cleanKey = prompt.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').substring(0, 24);
+      const titleCase = prompt.trim().replace(/(^\w|\s\w)/g, m => m.toUpperCase());
+      proposal = {
+        name: `${titleCase} Engine`,
+        key: cleanKey || 'custom_ai_module',
+        description: `Auto-generated autonomous feature: ${prompt}. Configured with dynamic runtime toggles and canary rollout.`,
+        category: 'ai_models',
+        rolloutPercentage: 100,
+        targetRoles: ['super_admin', 'admin'],
+        endpoint: `/api/custom/${cleanKey}`,
+        recommendedModel: 'Gemini Flash 2.5',
+        implementationCodeSnippet: `// Auto-generated API module for ${titleCase}\napp.post('/api/custom/${cleanKey}', async (req, res) => {\n  const result = await aiEngine.process(req.body);\n  res.json({ success: true, result });\n});`
+      };
+    }
+
+    logAudit('AI_FEATURE_SYNTHESIS', 'feature_flag', proposal.key, `AI auto-designed feature specification for "${proposal.name}" from prompt: "${prompt}"`);
+    return proposal;
+  };
+
+  // Video Generation Implementation
+  const sampleClips = [
+    {
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      thumb: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80'
+    },
+    {
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      thumb: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80'
+    },
+    {
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      thumb: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'
+    },
+    {
+      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      thumb: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80'
+    }
+  ];
+
+  const generateVideo = async (data: {
+    type: 'text_to_video' | 'image_to_video';
+    prompt: string;
+    sourceImageUrl?: string;
+    aspectRatio: '16:9' | '9:16' | '1:1';
+    durationSeconds: number;
+    modelName: string;
+  }): Promise<GeneratedVideo> => {
+    const clipIndex = Math.floor(Math.random() * sampleClips.length);
+    const chosen = sampleClips[clipIndex];
+
+    const newVideo: GeneratedVideo = {
+      id: `vid-${Date.now()}`,
+      title: data.prompt.length > 40 ? `${data.prompt.substring(0, 40)}...` : data.prompt,
+      type: data.type,
+      prompt: data.prompt,
+      sourceImageUrl: data.sourceImageUrl,
+      videoUrl: chosen.videoUrl,
+      thumbnailUrl: data.sourceImageUrl || chosen.thumb,
+      aspectRatio: data.aspectRatio,
+      durationSeconds: data.durationSeconds,
+      modelName: data.modelName,
+      createdAt: 'Just now',
+      status: 'completed'
+    };
+
+    setVideos((prev) => [newVideo, ...prev]);
+    logAudit('GENERATE_AI_VIDEO', 'system', newVideo.title, `Synthesized ${data.durationSeconds}s ${data.type} video using ${data.modelName}`);
+    addToast('success', 'AI Video Generated!', `"${newVideo.title}" was rendered in ${data.aspectRatio}.`);
+    return newVideo;
+  };
+
+  const deleteVideo = (id: string) => {
+    setVideos((prev) => prev.filter((v) => v.id !== id));
+    addToast('info', 'Video Removed', 'The generated video was deleted from your library.');
   };
 
   return (
@@ -599,7 +748,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         toasts,
         addToast,
         removeToast,
-        resetAllData
+        resetAllData,
+        autoCreateFeatureWithAI,
+        videos,
+        generateVideo,
+        deleteVideo
       }}
     >
       {children}

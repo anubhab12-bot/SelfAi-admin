@@ -4,9 +4,10 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToastContainer } from './components/layout/ToastContainer';
 
-// All 6 Rich & Intuitive Pages
+// All 7 Rich & Intuitive Pages
 import { Dashboard } from './pages/Dashboard';
 import { FeatureControl } from './pages/FeatureControl';
+import { VideoStudio } from './pages/VideoStudio';
 import { RbacUsers } from './pages/RbacUsers';
 import { SystemMonitoring } from './pages/SystemMonitoring';
 import { AuditLogs } from './pages/AuditLogs';
@@ -21,6 +22,8 @@ const AppContent: React.FC = () => {
         return <Dashboard />;
       case 'features':
         return <FeatureControl />;
+      case 'video':
+        return <VideoStudio />;
       case 'team':
         return <RbacUsers />;
       case 'monitoring':

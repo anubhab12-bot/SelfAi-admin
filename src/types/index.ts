@@ -27,7 +27,10 @@ export type Permission =
   | 'audit:view'
   // Settings
   | 'settings:view'
-  | 'settings:edit';
+  | 'settings:edit'
+  // Video Studio
+  | 'video:view'
+  | 'video:generate';
 
 export interface RoleInfo {
   id: Role;
@@ -159,4 +162,31 @@ export interface ToastMessage {
   title: string;
   message: string;
   timestamp: number;
+}
+
+export interface GeneratedVideo {
+  id: string;
+  title: string;
+  type: 'text_to_video' | 'image_to_video';
+  prompt: string;
+  sourceImageUrl?: string;
+  videoUrl: string;
+  thumbnailUrl: string;
+  aspectRatio: '16:9' | '9:16' | '1:1';
+  durationSeconds: number;
+  modelName: string;
+  createdAt: string;
+  status: 'completed' | 'generating' | 'failed';
+}
+
+export interface AIFeatureProposal {
+  name: string;
+  key: string;
+  description: string;
+  category: FeatureCategory;
+  rolloutPercentage: number;
+  targetRoles: Role[];
+  endpoint: string;
+  implementationCodeSnippet: string;
+  recommendedModel: string;
 }

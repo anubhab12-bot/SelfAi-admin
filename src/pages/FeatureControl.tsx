@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../context/AdminContext';
-import { FeatureFlag, FeatureCategory, Role } from '../types';
+import { FeatureFlag, FeatureCategory, Role, AIFeatureProposal } from '../types';
 import { Modal } from '../components/common/Modal';
 import { 
   Plus, 
@@ -14,7 +14,12 @@ import {
   Percent,
   Tag,
   Sliders,
-  Filter
+  Filter,
+  Wand2,
+  Code,
+  Cpu,
+  ArrowRight,
+  RotateCw
 } from 'lucide-react';
 
 export const FeatureControl: React.FC = () => {
@@ -25,7 +30,9 @@ export const FeatureControl: React.FC = () => {
     updateFeature,
     deleteFeature, 
     can, 
-    addToast 
+    addToast,
+    autoCreateFeatureWithAI,
+    setActiveTab 
   } = useAdmin();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,7 +41,13 @@ export const FeatureControl: React.FC = () => {
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
   const [editingRolloutFeat, setEditingRolloutFeat] = useState<FeatureFlag | null>(null);
+
+  // AI Feature Synthesizer State
+  const [aiPrompt, setAiPrompt] = useState('I want to add a video feature from text to video or image to video');
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [proposal, setProposal] = useState<AIFeatureProposal | null>(null);
 
   // New Feature Form State
   const [formData, setFormData] = useState({
@@ -78,6 +91,42 @@ export const FeatureControl: React.FC = () => {
     });
   };
 
+  const handleSynthesizeAI = async (customPrompt?: string) => {
+    const textToSynthesize = customPrompt || aiPrompt;
+    if (!textToSynthesize.trim()) return;
+
+    setIsSynthesizing(true);
+    try {
+      const generated = await autoCreateFeatureWithAI(textToSynthesize);
+      setProposal(generated);
+    } finally {
+      setIsSynthesizing(false);
+    }
+  };
+
+  const handleDeploySynthesizedFeature = () => {
+    if (!proposal) return;
+
+    createFeature({
+      name: proposal.name,
+      key: proposal.key,
+      description: proposal.description,
+      category: proposal.category,
+      enabled: true,
+      rolloutPercentage: proposal.rolloutPercentage,
+      targetRoles: proposal.targetRoles,
+      environment: 'production',
+      tags: ['ai-synthesized', proposal.key]
+    });
+
+    setIsAiModalOpen(false);
+    addToast('success', 'Feature Auto-Deployed!', `"${proposal.name}" is now live and active in your app.`);
+
+    if (proposal.key === 'video_generation_engine') {
+      setActiveTab('video');
+    }
+  };
+
   const filteredFeatures = features.filter((feat) => {
     const matchesSearch = 
       feat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -104,13 +153,28 @@ export const FeatureControl: React.FC = () => {
         </div>
 
         {can('features:create') ? (
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add New Feature</span>
-          </button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={() => {
+                setIsAiModalOpen(true);
+                if (!proposal) {
+                  handleSynthesizeAI();
+                }
+              }}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-purple-600/30 transition-all shrink-0 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-purple-200" />
+              <span>Auto-Create Feature with AI</span>
+            </button>
+
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-200 text-xs font-semibold transition-all shrink-0 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-slate-400" />
+              <span>Manual Add</span>
+            </button>
+          </div>
         ) : (
           <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
             <Lock className="w-3.5 h-3.5" />
@@ -456,6 +520,153 @@ export const FeatureControl: React.FC = () => {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* AI FEATURE AUTO-CREATOR & SYNTHESIZER MODAL */}
+      <Modal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        title="✨ Auto-Create & Deploy Feature with AI"
+        subtitle="Tell the AI what feature you want in plain words. It will synthesize the specs, register endpoints, and inject it into your app."
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>What feature do you want to add?</span>
+              <span className="text-[10px] text-purple-400 font-medium flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Autonomous Feature Synthesizer
+              </span>
+            </label>
+            <textarea
+              rows={2}
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="e.g. I want to add a video feature from text to video or image to video..."
+              className="w-full bg-slate-950 border border-slate-800 text-xs text-slate-200 rounded-xl p-3 focus:outline-none focus:border-purple-500 leading-relaxed"
+            />
+
+            {/* Quick Inspiration Chips */}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {[
+                'I want to add a video feature from text to video or image to video',
+                'Neural Voice & Whisper audio transcription pipeline',
+                'Autonomous Web Research & citation fact-checker',
+                'Real-time Multilingual chat translator'
+              ].map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setAiPrompt(chip);
+                    handleSynthesizeAI(chip);
+                  }}
+                  className={`text-[10px] px-2.5 py-1 rounded-lg border transition-colors truncate max-w-[260px] ${
+                    aiPrompt === chip
+                      ? 'bg-purple-600/20 text-purple-300 border-purple-500/40 font-semibold'
+                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                  }`}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => handleSynthesizeAI()}
+              disabled={isSynthesizing || !aiPrompt.trim()}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-purple-600/30 transition-all cursor-pointer"
+            >
+              {isSynthesizing ? (
+                <RotateCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Wand2 className="w-3.5 h-3.5" />
+              )}
+              <span>{isSynthesizing ? 'Synthesizing Feature...' : 'Synthesize Specification'}</span>
+            </button>
+          </div>
+
+          {/* Synthesized Proposal Box */}
+          {proposal && (
+            <div className="p-4 rounded-xl bg-slate-950 border border-purple-500/30 space-y-3 animate-slide-in">
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">
+                    AI Synthesized Feature Specification
+                  </span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-mono">
+                  Ready to Inject
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Feature Name</span>
+                  <p className="font-bold text-white mt-0.5">{proposal.name}</p>
+                </div>
+
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Feature Code Key</span>
+                  <p className="font-mono text-purple-300 mt-0.5 font-semibold"><code>{proposal.key}</code></p>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[11px] text-slate-500 block">Description</span>
+                <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">{proposal.description}</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Recommended AI Model</span>
+                  <p className="text-indigo-400 font-semibold mt-0.5">{proposal.recommendedModel}</p>
+                </div>
+
+                <div>
+                  <span className="text-[11px] text-slate-500 block">Target API Endpoint</span>
+                  <p className="font-mono text-emerald-400 mt-0.5 font-semibold">{proposal.endpoint}</p>
+                </div>
+              </div>
+
+              {/* Code Snippet */}
+              <div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+                  <span className="flex items-center gap-1 font-mono text-[10px]">
+                    <Code className="w-3 h-3 text-purple-400" />
+                    <span>Auto-Generated Backend Contract</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500">TypeScript / Node</span>
+                </div>
+                <pre className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-[11px] text-purple-300 font-mono overflow-x-auto whitespace-pre leading-relaxed">
+                  {proposal.implementationCodeSnippet}
+                </pre>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>100% Canary Rollout by default</span>
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleDeploySynthesizedFeature}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-purple-600/30 transition-all cursor-pointer"
+                >
+                  <span>Approve & Inject Feature into App</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );

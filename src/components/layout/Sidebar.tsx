@@ -3,6 +3,7 @@ import { useAdmin } from '../../context/AdminContext';
 import { 
   LayoutDashboard, 
   ToggleLeft, 
+  Film,
   Users, 
   Activity,
   FileText,
@@ -28,6 +29,12 @@ export const Sidebar: React.FC = () => {
       label: 'Feature Controls',
       icon: ToggleLeft,
       badge: `${enabledCount} Active`
+    },
+    {
+      id: 'video',
+      label: 'AI Video Studio',
+      icon: Film,
+      badge: 'AI Engine'
     },
     {
       id: 'team',
