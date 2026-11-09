@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { Role } from '../../types';
-import { ROLE_DEFINITIONS } from '../../utils/rbac';
 import { Badge } from '../common/Badge';
 import { 
   ShieldCheck, 
   ChevronDown, 
   RotateCcw, 
-  Globe, 
-  Search, 
   ExternalLink,
-  Radio,
   Zap
 } from 'lucide-react';
 
@@ -18,118 +14,84 @@ export const Header: React.FC = () => {
   const { 
     currentUser, 
     switchRole, 
-    environment, 
-    setEnvironment, 
     resetAllData,
     railwayUrl,
-    isLiveConnected,
     liveLatencyMs
   } = useAdmin();
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
-  const [envMenuOpen, setEnvMenuOpen] = useState(false);
 
-  const availableRoles: Role[] = ['super_admin', 'admin', 'product_manager', 'analyst', 'support'];
+  const simplifiedRoles: { id: Role; label: string; desc: string }[] = [
+    { id: 'super_admin', label: 'Super Admin', desc: 'Full control (you)' },
+    { id: 'admin', label: 'Admin', desc: 'Can toggle features & invite team' },
+    { id: 'analyst', label: 'Viewer', desc: 'Read-only access to dashboard' }
+  ];
 
   return (
-    <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
-      {/* Left: Search Bar */}
-      <div className="flex items-center gap-4 flex-1 max-w-md">
-        <div className="relative w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search features, users, models, logs... (Ctrl+K)"
-            className="w-full bg-slate-950/70 border border-slate-800/80 text-sm text-slate-200 placeholder:text-slate-500 rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-          />
+    <header className="h-16 border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
+      {/* Left: Simple Live Status */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span className="text-emerald-300 font-semibold">Self AI Online</span>
+          <span className="text-slate-400 font-mono text-[11px] border-l border-emerald-500/30 pl-2">
+            {liveLatencyMs}ms
+          </span>
         </div>
-      </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center gap-2.5">
-        {/* Live Railway App Link Pill */}
         <a
           href={railwayUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-semibold text-emerald-300 transition-all shadow-sm"
-          title={`Connected to ${railwayUrl}`}
+          className="hidden sm:flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 transition-colors"
         >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span className="font-mono text-[11px] truncate max-w-[140px]">frontend-production-0c17e</span>
-          <ExternalLink className="w-3 h-3 text-emerald-400 shrink-0" />
+          <span>frontend-production-0c17e.up.railway.app</span>
+          <ExternalLink className="w-3 h-3 text-slate-500" />
         </a>
+      </div>
 
-        {/* Live System Uptime */}
-        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-800/80 bg-slate-950/40 text-xs text-slate-300">
-          <Zap className="w-3 h-3 text-amber-400" />
-          <span className="text-slate-300 font-mono text-[11px]">{liveLatencyMs}ms</span>
-        </div>
-
-        {/* RBAC ROLE SWITCHER (PROMINENT FOR DEMO/TESTING) */}
+      {/* Right Controls */}
+      <div className="flex items-center gap-3">
+        {/* Simple Role Switcher */}
         <div className="relative">
           <button
             onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-all shadow-sm"
-            title="Click to test different RBAC permission tiers"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-200 transition-all"
+            title="Switch roles to test permissions"
           >
-            <ShieldCheck className="w-4 h-4 text-indigo-400" />
-            <div className="flex flex-col text-left">
-              <span className="text-[9px] uppercase tracking-wider text-slate-400 font-normal">Active Role</span>
-              <span className="text-slate-100 font-bold leading-tight">{ROLE_DEFINITIONS[currentUser.role].name}</span>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-indigo-400 ml-0.5" />
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Role:</span>
+            <span className="text-indigo-300 font-bold capitalize">
+              {currentUser.role === 'super_admin' ? 'Super Admin' : currentUser.role === 'admin' ? 'Admin' : 'Viewer'}
+            </span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
 
           {roleMenuOpen && (
-            <div className="absolute right-0 mt-2 w-72 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50">
-              <div className="px-3 py-2 border-b border-slate-800">
-                <p className="text-xs font-semibold text-slate-200">Switch RBAC Role</p>
-                <p className="text-[11px] text-slate-400">Instantly simulate permissions across the admin portal.</p>
+            <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-xl shadow-xl py-1.5 z-50">
+              <div className="px-3 py-1.5 border-b border-slate-800 text-[11px] font-semibold text-slate-400">
+                Test Role Permissions
               </div>
-
-              <div className="py-1">
-                {availableRoles.map((role) => {
-                  const info = ROLE_DEFINITIONS[role];
-                  const isCurrent = currentUser.role === role;
-                  return (
-                    <button
-                      key={role}
-                      onClick={() => {
-                        switchRole(role);
-                        setRoleMenuOpen(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-2.5 hover:bg-slate-800/80 transition-colors flex items-start gap-2.5 ${
-                        isCurrent ? 'bg-indigo-500/10' : ''
-                      }`}
-                    >
-                      <div className="mt-0.5">
-                        <Badge role={role} size="sm" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] text-slate-400 line-clamp-2 mt-0.5">{info.description}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              {simplifiedRoles.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => {
+                    switchRole(r.id);
+                    setRoleMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-800 transition-colors flex flex-col ${
+                    currentUser.role === r.id ? 'bg-indigo-500/10 text-indigo-300 font-semibold' : 'text-slate-300'
+                  }`}
+                >
+                  <span className="font-semibold">{r.label}</span>
+                  <span className="text-[10px] text-slate-400 font-normal">{r.desc}</span>
+                </button>
+              ))}
             </div>
           )}
         </div>
 
-        {/* Reset Demo Data Button */}
-        <button
-          onClick={resetAllData}
-          className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-xl transition-colors border border-transparent hover:border-slate-800"
-          title="Reset to factory demo data"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </button>
-
         {/* User Card */}
-        <div className="flex items-center gap-2.5 pl-2 border-l border-slate-800">
+        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
           <img
             src={currentUser.avatar}
             alt={currentUser.name}
@@ -137,7 +99,7 @@ export const Header: React.FC = () => {
           />
           <div className="hidden sm:block text-left">
             <p className="text-xs font-semibold text-slate-200 leading-tight">{currentUser.name}</p>
-            <p className="text-[10px] text-slate-400 leading-tight truncate max-w-[120px]">{currentUser.email}</p>
+            <p className="text-[10px] text-slate-400 leading-tight">Super Admin</p>
           </div>
         </div>
       </div>

@@ -4,13 +4,10 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { ToastContainer } from './components/layout/ToastContainer';
 
-// Pages
+// 4 Streamlined Pages
 import { Dashboard } from './pages/Dashboard';
-import { WeeklyUsage } from './pages/WeeklyUsage';
 import { FeatureControl } from './pages/FeatureControl';
 import { RbacUsers } from './pages/RbacUsers';
-import { SystemMonitoring } from './pages/SystemMonitoring';
-import { AuditLogs } from './pages/AuditLogs';
 import { Settings } from './pages/Settings';
 
 const AppContent: React.FC = () => {
@@ -20,16 +17,10 @@ const AppContent: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
-      case 'weekly-usage':
-        return <WeeklyUsage />;
-      case 'feature-control':
+      case 'features':
         return <FeatureControl />;
-      case 'rbac-users':
+      case 'team':
         return <RbacUsers />;
-      case 'monitoring':
-        return <SystemMonitoring />;
-      case 'audit-logs':
-        return <AuditLogs />;
       case 'settings':
         return <Settings />;
       default:
@@ -39,14 +30,14 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Sidebar Navigation */}
+      {/* Streamlined Sidebar Navigation */}
       <Sidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <Header />
         
-        <main className="flex-1 p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-6 lg:p-8 max-w-6xl w-full mx-auto">
           {renderActivePage()}
         </main>
       </div>
