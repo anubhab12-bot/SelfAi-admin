@@ -381,20 +381,32 @@ export const AgenticMcpStudio: React.FC = () => {
                   </div>
 
                   {/* Interactive Injected Feature Card */}
-                  <div className="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 space-y-2">
-                    <div className="flex items-center justify-between">
+                  <div className="p-4 rounded-xl bg-slate-900 border border-emerald-500/30 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <h4 className="text-sm font-bold text-white">{activeTask.createdFeature.name}</h4>
-                        <p className="text-xs text-slate-300 mt-0.5">{activeTask.createdFeature.description}</p>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-bold text-white">{activeTask.createdFeature.name}</h4>
+                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                            ONLINE &amp; INJECTED
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 mt-1">{activeTask.createdFeature.description}</p>
                       </div>
-                      <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/30">
-                        ONLINE & INJECTED
-                      </span>
+
+                      <a
+                        href={`https://frontend-production-0c17e.up.railway.app/features/${activeTask.createdFeature.key}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-md shadow-emerald-500/20 shrink-0 transition-all cursor-pointer"
+                      >
+                        <span>🚀 Open Feature in Main App</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
                     </div>
 
-                    <div className="pt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-                      <span>Key: <code>{activeTask.createdFeature.key}</code></span>
-                      <span>Target: {railwayUrl}</span>
+                    <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                      <span>Feature Key: <code className="text-emerald-300">{activeTask.createdFeature.key}</code></span>
+                      <span className="text-slate-500">Live on: frontend-production-0c17e.up.railway.app</span>
                     </div>
                   </div>
 

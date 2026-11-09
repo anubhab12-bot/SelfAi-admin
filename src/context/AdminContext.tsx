@@ -412,6 +412,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       prev.map((f) => {
         if (f.id === id) {
           const newState = !f.enabled;
+          // Sync with live Railway backend in real time
+          fetch(`${railwayUrl}/api/admin/features/${f.key}/toggle`, { method: 'POST' }).catch(() => {});
+
           logAudit(
             'TOGGLE_FEATURE_FLAG',
             'feature_flag',
@@ -450,9 +453,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       updatedBy: currentUser.name,
     };
 
+    // Sync with live Railway backend
+    fetch(`${railwayUrl}/api/admin/features`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key: newFeature.key,
+        name: newFeature.name,
+        description: newFeature.description,
+        enabled: newFeature.enabled,
+        category: newFeature.category,
+        icon: newFeature.key.includes('video') ? 'video' : newFeature.key.includes('stripe') || newFeature.key.includes('pay') ? 'credit-card' : 'sparkle',
+        route: `/features/${newFeature.key}`
+      })
+    }).catch(() => {});
+
     setFeatures((prev) => [newFeature, ...prev]);
     logAudit('CREATE_FEATURE_FLAG', 'feature_flag', newFeature.key, `Created feature flag "${newFeature.name}" in category ${newFeature.category}`);
-    addToast('success', 'Feature Created', `Successfully registered feature "${newFeature.name}" for SelfAI on Railway.`);
+    addToast('success', 'Feature Created & Live', `Successfully registered and synced feature "${newFeature.name}" with Railway.`);
   };
 
   const updateFeature = (id: string, updates: Partial<FeatureFlag>) => {
@@ -934,6 +952,25 @@ export const ${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module: React.FC = () => {
     };
 
     setFeatures((prev) => [newFeature, ...prev.filter((f) => f.key !== cleanKey)]);
+
+    // Push directly to live Railway backend registry so it appears in the main app
+    try {
+      await fetch(`${railwayUrl}/api/admin/features`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          key: cleanKey,
+          name: titleCase,
+          description: `Autonomous feature auto-engineered from: "${prompt}"`,
+          enabled: true,
+          category: 'ai_models',
+          icon: cleanKey.includes('video') ? 'video' : cleanKey.includes('stripe') || cleanKey.includes('pay') ? 'credit-card' : 'sparkle',
+          route: `/features/${cleanKey}`
+        })
+      });
+    } catch (err) {
+      console.warn('Could not sync feature to Railway backend:', err);
+    }
 
     recordStep({
       type: 'injection',

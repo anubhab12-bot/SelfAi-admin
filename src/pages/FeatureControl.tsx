@@ -19,7 +19,8 @@ import {
   Code,
   Cpu,
   ArrowRight,
-  RotateCw
+  RotateCw,
+  ExternalLink
 } from 'lucide-react';
 
 export const FeatureControl: React.FC = () => {
@@ -348,15 +349,28 @@ export const FeatureControl: React.FC = () => {
               <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
                 <span className="font-mono text-[11px] text-slate-400">code: <code>{feat.key}</code></span>
 
-                {canDelete && (
-                  <button
-                    onClick={() => deleteFeature(feat.id)}
-                    className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                    title="Delete feature"
+                <div className="flex items-center gap-2.5">
+                  <a
+                    href={`https://frontend-production-0c17e.up.railway.app/features/${feat.key}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium bg-indigo-950/40 px-2 py-1 rounded border border-indigo-500/20"
+                    title="Open and view this feature live in the main application"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                    <span>View in App</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+
+                  {canDelete && (
+                    <button
+                      onClick={() => deleteFeature(feat.id)}
+                      className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                      title="Delete feature"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
