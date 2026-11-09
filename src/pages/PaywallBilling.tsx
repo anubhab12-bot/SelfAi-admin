@@ -522,96 +522,150 @@ export const PaywallBilling: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-800 text-slate-400 text-[11px] font-semibold uppercase tracking-wider">
-                <th className="pb-3 pl-2">Customer</th>
-                <th className="pb-3">Invoice & Ref</th>
-                <th className="pb-3">Plan Tier</th>
-                <th className="pb-3">Payment Method</th>
-                <th className="pb-3">Amount</th>
-                <th className="pb-3">Status</th>
-                <th className="pb-3">Date</th>
-                <th className="pb-3 text-right pr-2">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {filteredPayments.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-850/50 transition-colors">
-                  {/* Customer */}
-                  <td className="py-3 pl-2">
-                    <div className="flex items-center gap-2.5">
-                      <img
-                        src={p.customerAvatar}
-                        alt={p.customerName}
-                        className="w-7 h-7 rounded-full object-cover border border-slate-700"
-                      />
-                      <div>
-                        <div className="font-semibold text-white">{p.customerName}</div>
-                        <div className="text-[10px] text-slate-400 font-mono">{p.customerEmail}</div>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Invoice */}
-                  <td className="py-3">
-                    <div className="font-mono text-slate-200 font-medium">{p.invoiceId}</div>
-                    <div className="text-[10px] font-mono text-slate-500">{p.transactionRef}</div>
-                  </td>
-
-                  {/* Plan Tier */}
-                  <td className="py-3">
-                    <span
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        p.tier === 'power'
-                          ? 'bg-purple-500/15 border border-purple-500/30 text-purple-300'
-                          : 'bg-indigo-500/15 border border-indigo-500/30 text-indigo-300'
-                      }`}
-                    >
-                      <Crown className="w-2.5 h-2.5" />
-                      {p.planName}
-                    </span>
-                  </td>
-
-                  {/* Payment Method */}
-                  <td className="py-3 text-slate-300 text-[11px]">
-                    {p.paymentMethod}
-                  </td>
-
-                  {/* Amount */}
-                  <td className="py-3 font-mono font-bold text-emerald-400 text-xs">
-                    ₹{p.amount.toLocaleString('en-IN')}
-                  </td>
-
-                  {/* Status */}
-                  <td className="py-3">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-semibold text-emerald-400">
-                      <CheckCircle2 className="w-2.5 h-2.5" />
-                      Paid
-                    </span>
-                  </td>
-
-                  {/* Date */}
-                  <td className="py-3 text-slate-400 text-[11px] font-mono">
-                    {p.date}
-                  </td>
-
-                  {/* Action */}
-                  <td className="py-3 text-right pr-2">
-                    <button
-                      onClick={() => handleDownloadInvoice(p.invoiceId, p.customerName, p.amount)}
-                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer inline-flex items-center gap-1 text-[11px]"
-                      title="Download Invoice PDF"
-                    >
-                      <Download className="w-3.5 h-3.5 text-indigo-400" />
-                      <span>PDF</span>
-                    </button>
-                  </td>
+        {filteredPayments.length === 0 ? (
+          <div className="py-10 px-4 text-center rounded-xl bg-slate-950/40 border border-slate-800">
+            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center mx-auto text-slate-400 mb-2.5">
+              <CreditCard className="w-5 h-5 text-indigo-400" />
+            </div>
+            <h3 className="text-xs font-bold text-white mb-1">No Live Payments Recorded Yet</h3>
+            <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+              Real payment transactions and receipts will be logged here as soon as users purchase subscriptions. No demo or fake invoices are shown.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 text-[11px] font-semibold uppercase tracking-wider">
+                  <th className="pb-3 pl-2">Customer</th>
+                  <th className="pb-3">Invoice & Ref</th>
+                  <th className="pb-3">Plan Tier</th>
+                  <th className="pb-3">Payment Method</th>
+                  <th className="pb-3">Amount</th>
+                  <th className="pb-3">Status</th>
+                  <th className="pb-3">Date</th>
+                  <th className="pb-3 text-right pr-2">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {filteredPayments.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-850/50 transition-colors">
+                    <td className="py-3 pl-2">
+                      <div className="flex items-center gap-2.5">
+                        <img
+                          src={p.customerAvatar}
+                          alt={p.customerName}
+                          className="w-7 h-7 rounded-full object-cover border border-slate-700"
+                        />
+                        <div>
+                          <div className="font-semibold text-white">{p.customerName}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{p.customerEmail}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3">
+                      <div className="font-mono text-slate-200 font-medium">{p.invoiceId}</div>
+                      <div className="text-[10px] font-mono text-slate-500">{p.transactionRef}</div>
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          p.tier === 'power'
+                            ? 'bg-purple-500/15 border border-purple-500/30 text-purple-300'
+                            : 'bg-indigo-500/15 border border-indigo-500/30 text-indigo-300'
+                        }`}
+                      >
+                        <Crown className="w-2.5 h-2.5" />
+                        {p.planName}
+                      </span>
+                    </td>
+                    <td className="py-3 text-slate-300 text-[11px]">{p.paymentMethod}</td>
+                    <td className="py-3 font-mono font-bold text-emerald-400 text-xs">
+                      ₹{p.amount.toLocaleString('en-IN')}
+                    </td>
+                    <td className="py-3">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-semibold text-emerald-400">
+                        <CheckCircle2 className="w-2.5 h-2.5" />
+                        Paid
+                      </span>
+                    </td>
+                    <td className="py-3 text-slate-400 text-[11px] font-mono">{p.date}</td>
+                    <td className="py-3 text-right pr-2">
+                      <button
+                        onClick={() => handleDownloadInvoice(p.invoiceId, p.customerName, p.amount)}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all cursor-pointer inline-flex items-center gap-1 text-[11px]"
+                        title="Download Invoice PDF"
+                      >
+                        <Download className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>PDF</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Real Team & Premium User Directory */}
+      <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-md space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <UserCheck className="w-4 h-4 text-indigo-400" />
+            <div>
+              <h2 className="text-sm font-bold text-white">Registered Users & Premium Plan Tiers</h2>
+              <p className="text-[11px] text-slate-400">Live directory of active users, assigned roles, and subscription status.</p>
+            </div>
+          </div>
+          <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            {userTraces.length} Active Accounts
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {userTraces.map((u) => (
+            <div
+              key={u.id}
+              className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <img
+                  src={u.userAvatar}
+                  alt={u.userName}
+                  className="w-9 h-9 rounded-full object-cover border border-slate-700 shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-white truncate">{u.userName}</span>
+                    <span className="text-xs">{u.flag}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-mono truncate">{u.userEmail}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5 flex items-center gap-2">
+                    <span>{u.device}</span>
+                    <span>•</span>
+                    <span className="text-emerald-400">Online</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="shrink-0 text-right">
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    u.tier === 'power'
+                      ? 'bg-purple-500/15 border border-purple-500/30 text-purple-300'
+                      : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
+                  }`}
+                >
+                  <Crown className="w-2.5 h-2.5" />
+                  {u.tier === 'power' ? 'Super Admin (Unlimited)' : 'Pro Access'}
+                </span>
+                <div className="text-[10px] text-slate-400 mt-1 font-mono">
+                  {u.queriesToday} queries today
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

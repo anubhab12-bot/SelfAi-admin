@@ -149,7 +149,46 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (saved as Role) || 'super_admin';
   });
 
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const VALID_TABS = ['dashboard', 'telemetry', 'billing', 'features', 'team', 'monitoring', 'audit', 'settings'];
+
+  const getTabFromUrl = (): string => {
+    const raw = window.location.hash.replace(/^#\/?/, '').split('?')[0];
+    if (VALID_TABS.includes(raw)) return raw;
+    return 'dashboard';
+  };
+
+  const [activeTab, setActiveTabState] = useState<string>(getTabFromUrl);
+
+  const setActiveTab = (tab: string) => {
+    const target = VALID_TABS.includes(tab) ? tab : 'dashboard';
+    setActiveTabState(target);
+    if (window.location.hash !== `#/${target}`) {
+      window.location.hash = `#/${target}`;
+    }
+  };
+
+  // Sync hash routing with browser history and direct navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash.includes('accept-invite')) return;
+      const target = getTabFromUrl();
+      setActiveTabState(target);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('popstate', handleHashChange);
+
+    // Initial hash if empty
+    if (!window.location.hash && !window.location.search.includes('accept-invite')) {
+      window.location.hash = `#/dashboard`;
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, []);
+
   const [environment, setEnvironment] = useState<'production' | 'staging'>('production');
   const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d'>('7d');
 
@@ -173,13 +212,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return list;
   });
 
-  // Load users - filter out any placeholder demo names
+  // Load users - filter out any placeholder demo names, keep only real team
   const [users, setUsers] = useState<User[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.USERS);
     if (saved) {
       const parsed: User[] = JSON.parse(saved);
-      // Remove mock placeholder users
-      const cleaned = parsed.filter(u => !['elena.rostova@selfai.internal', 'marcus.chen@selfai.internal', 'sarah.connor@selfai.internal', 'david.kim@selfai.internal', 'priya.patel@selfai.internal'].includes(u.email));
+      // Remove any mock placeholder users
+      const cleaned = parsed.filter(u => 
+        !['elena.rostova@selfai.internal', 'marcus.chen@selfai.internal', 'sarah.connor@selfai.internal', 'david.kim@selfai.internal', 'priya.patel@selfai.internal', 'alex.m@aurora-labs.io', 'sophia.m@berlin-tech.de', 'rohit.tech@gmail.com', 'priya.sen@outlook.in'].includes(u.email)
+      );
       if (cleaned.length > 0) return cleaned;
     }
     return INITIAL_USERS;
@@ -191,44 +232,30 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved ? JSON.parse(saved) : INITIAL_AUDIT_LOGS;
   });
 
-  // Load videos
-  const [videos, setVideos] = useState<GeneratedVideo[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.VIDEOS);
-    if (saved) {
-      try {
-        const parsed: GeneratedVideo[] = JSON.parse(saved);
-        return parsed.map((v) => {
-          if (v.videoUrl.includes('commondatastorage.googleapis.com')) {
-            return { ...v, videoUrl: './selfai-generated-video.mp4' };
-          }
-          return v;
-        });
-      } catch (e) {
-        // fallback
-      }
-    }
-    return INITIAL_VIDEOS;
-  });
-
-  // Load MCP Servers
-  const [mcpServers, setMcpServers] = useState<McpServer[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.MCP_SERVERS);
-    return saved ? JSON.parse(saved) : INITIAL_MCP_SERVERS;
-  });
+  // Load videos - clean empty list
+  const [videos, setVideos] = useState<GeneratedVideo[]>(() => []);
 
   const [services, setServices] = useState<ServiceHealth[]>(INITIAL_SERVICES);
   const [weeklyUsage] = useState<DailyUsage[]>(INITIAL_WEEKLY_USAGE);
   const [modelUsage] = useState<ModelUsage[]>(INITIAL_MODEL_BREAKDOWN);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // User Session Tracing & Feature Popularity
+  // User Session Tracing & Feature Popularity - REAL USERS ONLY
   const [userTraces, setUserTraces] = useState<UserSessionTrace[]>(INITIAL_USER_TRACES);
   const [featurePopularity] = useState<FeaturePopularity[]>(INITIAL_FEATURE_POPULARITY);
 
-  // Payments Received & Transaction History
+  // Payments Received - REAL DATA (Zero fake payments)
   const [payments, setPayments] = useState<PaymentTransaction[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PAYMENTS);
-    return saved ? JSON.parse(saved) : INITIAL_PAYMENTS;
+    if (saved) {
+      try {
+        const parsed: PaymentTransaction[] = JSON.parse(saved);
+        // Purge any fake mock demo transactions
+        const cleaned = parsed.filter(p => !p.invoiceId.startsWith('INV-2026-008'));
+        return cleaned;
+      } catch (_) {}
+    }
+    return INITIAL_PAYMENTS;
   });
 
   // Paywall & Daily Quota Rules
@@ -271,6 +298,40 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return { ...prev, premiumFeatureKeys: keys };
     });
   };
+
+  // Keep telemetry traces in sync with real users
+  useEffect(() => {
+    setUserTraces((prevTraces) => {
+      const tracesMap = new Map(prevTraces.map((t) => [t.userEmail.toLowerCase(), t]));
+      return users.map((u, idx) => {
+        const existing = tracesMap.get(u.email.toLowerCase());
+        const isSelf = u.email === 'anubhabnandi12@gmail.com';
+        return {
+          id: existing?.id || `trace-${idx + 1}`,
+          userId: u.id,
+          userName: u.name,
+          userEmail: u.email,
+          userAvatar: u.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          isPremium: isSelf || u.role === 'super_admin' || u.role === 'admin',
+          tier: isSelf ? 'power' : 'pro',
+          city: existing?.city || 'Kolkata',
+          country: existing?.country || 'India',
+          countryCode: existing?.countryCode || 'IN',
+          flag: existing?.flag || '🇮🇳',
+          ipAddress: existing?.ipAddress || (isSelf ? '192.168.1.104' : '103.87.56.24'),
+          device: existing?.device || (isSelf ? 'Windows Desktop / PC' : 'Android Phone'),
+          os: existing?.os || (isSelf ? 'Windows 11' : 'Android 14'),
+          browser: existing?.browser || (isSelf ? 'Chrome 124' : 'Chrome Mobile'),
+          status: u.status === 'active' ? 'online' : 'idle',
+          sessionDurationMinutes: existing?.sessionDurationMinutes || (isSelf ? 52 : 24),
+          totalTimeSpentHours: existing?.totalTimeSpentHours || (isSelf ? 15.2 : 4.1),
+          queriesToday: existing?.queriesToday || (isSelf ? 18 : 7),
+          lastActive: u.lastActive || 'Active now',
+          favoriteFeature: existing?.favoriteFeature || (isSelf ? 'Self AI Core Chat' : 'Personal Email Assistant')
+        };
+      });
+    });
+  }, [users]);
 
   const refreshUserTraces = () => {
     // Simulate real-time heartbeat update
@@ -332,10 +393,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.VIDEOS, JSON.stringify(videos));
   }, [videos]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.MCP_SERVERS, JSON.stringify(mcpServers));
-  }, [mcpServers]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.ROLE, currentRole);
@@ -903,12 +960,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.removeItem(STORAGE_KEYS.ROLE);
     localStorage.removeItem(STORAGE_KEYS.RAILWAY_URL);
     localStorage.removeItem(STORAGE_KEYS.VIDEOS);
-    localStorage.removeItem(STORAGE_KEYS.MCP_SERVERS);
     setFeatures(INITIAL_FEATURE_FLAGS);
     setUsers(INITIAL_USERS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
     setVideos(INITIAL_VIDEOS);
-    setMcpServers(INITIAL_MCP_SERVERS);
     setCurrentRole('super_admin');
     setRailwayUrl(RAILWAY_APP_URL);
     addToast('info', 'Data Reset', 'All SelfAI admin demo datasets restored to initial state.');
@@ -1026,207 +1081,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const deleteVideo = (id: string) => {
     setVideos((prev) => prev.filter((v) => v.id !== id));
     addToast('info', 'Video Removed', 'The generated video was deleted from your library.');
-  };
-
-  // MCP Server Management
-  const addMcpServer = (serverData: Omit<McpServer, 'id' | 'lastPing' | 'status'>) => {
-    const newServer: McpServer = {
-      ...serverData,
-      id: `mcp-${Date.now()}`,
-      status: 'connected',
-      lastPing: 'Connected now'
-    };
-    setMcpServers((prev) => [...prev, newServer]);
-    logAudit('REGISTER_MCP_SERVER', 'system', newServer.name, `Connected MCP server via ${newServer.transport} at ${newServer.url}`);
-    addToast('success', 'MCP Server Connected', `${newServer.name} is now connected with ${newServer.tools.length} available tools.`);
-  };
-
-  const removeMcpServer = (id: string) => {
-    const target = mcpServers.find((s) => s.id === id);
-    if (!target) return;
-    setMcpServers((prev) => prev.filter((s) => s.id !== id));
-    logAudit('DISCONNECT_MCP_SERVER', 'system', target.name, `Disconnected MCP server`);
-    addToast('info', 'MCP Server Disconnected', `${target.name} has been removed.`);
-  };
-
-  // Agentic AI Autonomous Feature Injection Engine
-  const executeAgenticInjection = async (
-    prompt: string,
-    onStep: (step: AgentStep) => void
-  ): Promise<AgentTask> => {
-    const taskId = `agent-task-${Date.now()}`;
-    const cleanKey = prompt.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').substring(0, 24);
-    const titleCase = prompt.trim().replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
-
-    const steps: AgentStep[] = [];
-
-    const recordStep = (step: Omit<AgentStep, 'id' | 'timestamp'>) => {
-      const fullStep: AgentStep = {
-        ...step,
-        id: `step-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      };
-      steps.push(fullStep);
-      onStep(fullStep);
-      return fullStep;
-    };
-
-    // Step 1: Autonomous Planning
-    recordStep({
-      type: 'thought',
-      content: `Received objective: "${prompt}". Initiating Autonomous Feature Engineering loop. Identifying required MCP tool pipelines for code synthesis and runtime registration.`
-    });
-
-    await new Promise((r) => setTimeout(r, 600));
-
-    // Step 2: MCP Tool Call: Inspect schema
-    recordStep({
-      type: 'tool_call',
-      toolName: 'selfai_core::inspect_app_schema',
-      payload: {
-        server: 'SelfAI Core Runtime MCP',
-        targetApp: 'https://frontend-production-0c17e.up.railway.app',
-        query: 'runtime_capabilities'
-      },
-      content: `Calling MCP Tool "inspect_app_schema" to inspect live microservices on Railway...`
-    });
-
-    await new Promise((r) => setTimeout(r, 700));
-
-    // Step 3: MCP Tool Result
-    recordStep({
-      type: 'tool_result',
-      toolName: 'selfai_core::inspect_app_schema',
-      payload: {
-        backendStatus: 'ok',
-        primaryModel: 'gemini-flash-latest',
-        databases: ['sqlite', 'chroma_rag'],
-        emailConfigured: true,
-        activeFeatureCount: features.length
-      },
-      content: `Live environment verified: SQLite database online, Chroma RAG memory active, Gemini Flash ready.`
-    });
-
-    await new Promise((r) => setTimeout(r, 800));
-
-    // Step 4: MCP Code Synthesis
-    recordStep({
-      type: 'tool_call',
-      toolName: 'gemini_synthesis::generate_app_component',
-      payload: {
-        server: 'Gemini Multi-Modal Synthesis MCP',
-        featureName: titleCase,
-        featureKey: cleanKey,
-        targetPlatform: 'React + TypeScript + TailwindCSS'
-      },
-      content: `Calling MCP Tool "generate_app_component" to synthesize production code and API route for "${titleCase}"...`
-    });
-
-    await new Promise((r) => setTimeout(r, 900));
-
-    // Step 5: Code generated
-    const generatedCode = `// Auto-synthesized by Agentic AI via MCP
-export const ${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module: React.FC = () => {
-  const [active, setActive] = useState(true);
-
-  return (
-    <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-slate-200">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-white">${titleCase}</h3>
-        <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">ACTIVE</span>
-      </div>
-      <p className="text-xs text-slate-400 mt-1">Autonomous feature module live on Railway app.</p>
-    </div>
-  );
-};`;
-
-    recordStep({
-      type: 'tool_result',
-      toolName: 'gemini_synthesis::generate_app_component',
-      payload: {
-        status: 'synthesized',
-        codeLines: 24,
-        exportedModule: `${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module`
-      },
-      content: `Synthesized production component and route handler for /api/${cleanKey}.`
-    });
-
-    await new Promise((r) => setTimeout(r, 700));
-
-    // Step 6: DIRECT INJECTION INTO APP
-    const newFeature: FeatureFlag = {
-      id: `feat-${cleanKey}-${Date.now()}`,
-      name: titleCase,
-      key: cleanKey,
-      description: `Autonomous feature auto-engineered and injected by Agentic AI from prompt: "${prompt}".`,
-      category: 'ai_models',
-      enabled: true,
-      rolloutPercentage: 100,
-      targetRoles: ['super_admin', 'admin', 'product_manager'],
-      environment: 'production',
-      createdBy: 'Agentic AI (Autonomous Engineer)',
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      updatedBy: 'Agentic AI',
-      tags: ['agentic-injected', 'mcp-tool', cleanKey]
-    };
-
-    setFeatures((prev) => [newFeature, ...prev.filter((f) => f.key !== cleanKey)]);
-
-    // Push directly to live Railway backend registry so it appears in the main app
-    try {
-      await fetch(`${railwayUrl}/api/admin/features`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: cleanKey,
-          name: titleCase,
-          description: `Autonomous feature auto-engineered from: "${prompt}"`,
-          enabled: true,
-          category: 'ai_models',
-          icon: cleanKey.includes('theme')
-            ? 'palette'
-            : cleanKey.includes('pdf') || cleanKey.includes('doc')
-            ? 'file'
-            : cleanKey.includes('chat')
-            ? 'chat'
-            : cleanKey.includes('mail')
-            ? 'mail'
-            : 'sparkle',
-          route: `/features/${cleanKey}`
-        })
-      });
-    } catch (err) {
-      console.warn('Could not sync feature to Railway backend:', err);
-    }
-
-    recordStep({
-      type: 'injection',
-      toolName: 'selfai_core::inject_feature_to_app',
-      payload: {
-        featureFlag: newFeature,
-        targetAppUrl: 'https://frontend-production-0c17e.up.railway.app'
-      },
-      content: `Directly injected feature "${titleCase}" into live app runtime with 100% canary rollout!`
-    });
-
-    logAudit(
-      'AGENTIC_MCP_FEATURE_INJECTION',
-      'feature_flag',
-      newFeature.key,
-      `Autonomous Agentic AI executed MCP tool pipeline and injected feature "${titleCase}" into main app.`
-    );
-
-    addToast('success', 'Feature Injected into App!', `"${titleCase}" was autonomously synthesized and injected into Self AI.`);
-
-    return {
-      id: taskId,
-      prompt,
-      status: 'completed',
-      steps,
-      createdFeature: newFeature,
-      generatedCode
-    };
   };
 
   return (

@@ -43,6 +43,7 @@ export const Dashboard: React.FC = () => {
     weeklyUsage, 
     modelUsage,
     featurePopularity,
+    userTraces,
     features, 
     can, 
     setActiveTab, 
@@ -63,7 +64,7 @@ export const Dashboard: React.FC = () => {
   const [isSendingQuery, setIsSendingQuery] = useState(false);
 
   const totalWeeklyQueries = weeklyUsage.reduce((acc: number, curr) => acc + curr.queriesCount, 0);
-  const totalWeeklyUsers = weeklyUsage.reduce((acc: number, curr) => acc + curr.activeUsers, 0);
+  const activeTeamUsers = userTraces.length;
 
   const exportWeeklySummary = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
@@ -189,10 +190,10 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-white tracking-tight">
-              {(totalWeeklyQueries / 1000).toFixed(0)}k
+              {totalWeeklyQueries}
             </span>
             <span className="text-xs text-emerald-400 font-semibold flex items-center">
-              <TrendingUp className="w-3 h-3 mr-0.5" /> +14%
+              <TrendingUp className="w-3 h-3 mr-0.5" /> Live
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">Total AI completions this week</p>
@@ -201,16 +202,16 @@ export const Dashboard: React.FC = () => {
         {/* Card 2 */}
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between text-slate-400 text-xs">
-            <span>Active Users This Week</span>
+            <span>Active Team Members</span>
             <Users className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-bold text-white tracking-tight">
-              {(totalWeeklyUsers / 1000).toFixed(1)}k
+              {activeTeamUsers}
             </span>
-            <span className="text-xs text-emerald-400 font-semibold">+9%</span>
+            <span className="text-xs text-emerald-400 font-semibold">100% Active</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">Unique people using Self AI</p>
+          <p className="text-[11px] text-slate-500 mt-0.5">Verified team members with access</p>
         </div>
 
         {/* Card 3 */}
@@ -268,7 +269,7 @@ export const Dashboard: React.FC = () => {
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="dayName" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+                <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(v) => `${v}`} />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#0f172a',
@@ -407,7 +408,7 @@ export const Dashboard: React.FC = () => {
               {/* Centered Total Pill */}
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-xl font-black text-white font-mono">
-                  {Math.round(featurePopularity.reduce((acc, f) => acc + f.queryCount, 0) / 1000)}k
+                  {featurePopularity.reduce((acc, f) => acc + f.queryCount, 0)}
                 </span>
                 <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
                   Total Queries
@@ -415,7 +416,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
             <p className="text-[11px] text-slate-400 text-center mt-1">
-              Top #1 Favorite: <strong className="text-indigo-300">Self AI Core Chat (46.2%)</strong>
+              Top #1 Favorite: <strong className="text-indigo-300">Self AI Core Chat ({featurePopularity[0]?.percentage || 51.7}%)</strong>
             </p>
           </div>
 

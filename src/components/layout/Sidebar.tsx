@@ -100,10 +100,14 @@ export const Sidebar: React.FC = () => {
           const isActive = activeTab === item.id;
 
           return (
-            <button
+            <a
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all ${
+              href={`#/${item.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setActiveTab(item.id);
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs transition-all cursor-pointer ${
                 isActive
                   ? 'bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/20'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 font-medium'
@@ -125,7 +129,7 @@ export const Sidebar: React.FC = () => {
                   {item.badge}
                 </span>
               )}
-            </button>
+            </a>
           );
         })}
       </div>

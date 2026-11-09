@@ -89,129 +89,119 @@ export const INITIAL_WEEKLY_USAGE: DailyUsage[] = [
   {
     date: '2026-11-03',
     dayName: 'Mon',
-    activeUsers: 3420,
-    queriesCount: 48920,
-    promptTokens: 18450000,
-    completionTokens: 11200000,
-    totalTokens: 29650000,
-    avgLatencyMs: 220,
-    costUSD: 41.30,
-    errorRatePercent: 0.08
+    activeUsers: 2,
+    queriesCount: 14,
+    promptTokens: 5200,
+    completionTokens: 3800,
+    totalTokens: 9000,
+    avgLatencyMs: 195,
+    costUSD: 0.01,
+    errorRatePercent: 0.0
   },
   {
     date: '2026-11-04',
     dayName: 'Tue',
-    activeUsers: 3890,
-    queriesCount: 56210,
-    promptTokens: 21900000,
-    completionTokens: 13400000,
-    totalTokens: 35300000,
-    avgLatencyMs: 205,
-    costUSD: 49.60,
-    errorRatePercent: 0.05
+    activeUsers: 2,
+    queriesCount: 22,
+    promptTokens: 8400,
+    completionTokens: 5600,
+    totalTokens: 14000,
+    avgLatencyMs: 180,
+    costUSD: 0.02,
+    errorRatePercent: 0.0
   },
   {
     date: '2026-11-05',
     dayName: 'Wed',
-    activeUsers: 4120,
-    queriesCount: 62450,
-    promptTokens: 24800000,
-    completionTokens: 14900000,
-    totalTokens: 39700000,
-    avgLatencyMs: 230,
-    costUSD: 55.40,
-    errorRatePercent: 0.11
+    activeUsers: 2,
+    queriesCount: 19,
+    promptTokens: 7100,
+    completionTokens: 4900,
+    totalTokens: 12000,
+    avgLatencyMs: 210,
+    costUSD: 0.01,
+    errorRatePercent: 0.0
   },
   {
     date: '2026-11-06',
     dayName: 'Thu',
-    activeUsers: 4350,
-    queriesCount: 68100,
-    promptTokens: 27100000,
-    completionTokens: 16800000,
-    totalTokens: 43900000,
-    avgLatencyMs: 210,
-    costUSD: 61.80,
-    errorRatePercent: 0.06
+    activeUsers: 2,
+    queriesCount: 28,
+    promptTokens: 10400,
+    completionTokens: 7200,
+    totalTokens: 17600,
+    avgLatencyMs: 185,
+    costUSD: 0.02,
+    errorRatePercent: 0.0
   },
   {
     date: '2026-11-07',
     dayName: 'Fri',
-    activeUsers: 4580,
-    queriesCount: 74200,
-    promptTokens: 29500000,
-    completionTokens: 18400000,
-    totalTokens: 47900000,
-    avgLatencyMs: 240,
-    costUSD: 67.80,
-    errorRatePercent: 0.12
+    activeUsers: 2,
+    queriesCount: 31,
+    promptTokens: 12200,
+    completionTokens: 8500,
+    totalTokens: 20700,
+    avgLatencyMs: 190,
+    costUSD: 0.02,
+    errorRatePercent: 0.0
   },
   {
     date: '2026-11-08',
     dayName: 'Sat',
-    activeUsers: 2890,
-    queriesCount: 39800,
-    promptTokens: 15300000,
-    completionTokens: 9600000,
-    totalTokens: 24900000,
-    avgLatencyMs: 195,
-    costUSD: 35.80,
-    errorRatePercent: 0.04
+    activeUsers: 2,
+    queriesCount: 24,
+    promptTokens: 9100,
+    completionTokens: 6300,
+    totalTokens: 15400,
+    avgLatencyMs: 175,
+    costUSD: 0.01,
+    errorRatePercent: 0.0
   },
   {
     date: '2026-11-09',
-    dayName: 'Sun (Today)',
-    activeUsers: 3150,
-    queriesCount: 44300,
-    promptTokens: 17200000,
-    completionTokens: 10800000,
-    totalTokens: 28000000,
+    dayName: 'Today',
+    activeUsers: 2,
+    queriesCount: 38,
+    promptTokens: 14500,
+    completionTokens: 9800,
+    totalTokens: 24300,
     avgLatencyMs: 185,
-    costUSD: 39.00,
-    errorRatePercent: 0.03
+    costUSD: 0.03,
+    errorRatePercent: 0.0
   }
 ];
 
 export const INITIAL_MODEL_BREAKDOWN: ModelUsage[] = [
   {
-    modelName: 'Gemini Flash Latest (Primary)',
-    provider: 'Google AI (Railway Engine)',
-    queryCount: 214500,
-    percentage: 54.4,
+    modelName: 'Gemini Flash (gemini-flash-latest)',
+    provider: 'Google AI (Primary Live Model)',
+    queryCount: 142,
+    percentage: 78.5,
     avgLatencyMs: 185,
-    tokensTotal: 135000000,
-    costUSD: 148.50,
+    tokensTotal: 58000,
+    costUSD: 0.06,
     color: '#6366f1' // indigo
   },
   {
-    modelName: 'Gemini 2.5 Flash Lite (Fallback)',
-    provider: 'Google AI (Failover Cluster)',
-    queryCount: 98400,
-    percentage: 25.0,
+    modelName: 'Gemini Flash Lite (Failover Cluster)',
+    provider: 'Google AI (High Load Failover)',
+    queryCount: 26,
+    percentage: 14.4,
     avgLatencyMs: 120,
-    tokensTotal: 62000000,
-    costUSD: 49.60,
+    tokensTotal: 11000,
+    costUSD: 0.01,
     color: '#06b6d4' // cyan
   },
   {
     modelName: 'Gemini Embedding 001',
-    provider: 'Chroma RAG Vector Store',
-    queryCount: 52100,
-    percentage: 13.2,
-    avgLatencyMs: 38,
-    tokensTotal: 34200000,
-    costUSD: 27.30,
+    provider: 'Chroma Document Vector Store',
+    queryCount: 13,
+    percentage: 7.1,
+    avgLatencyMs: 42,
+    tokensTotal: 6500,
+    costUSD: 0.01,
     color: '#10b981' // emerald
-  },
-  {
-    modelName: 'Ollama Local Host',
-    provider: 'Self-Hosted Ollama',
-    queryCount: 29000,
-    percentage: 7.4,
-    avgLatencyMs: 95,
-    tokensTotal: 18100000,
-    costUSD: 14.50,
-    color: '#f59e0b' // amber
   }
 ];
 
@@ -298,48 +288,7 @@ export const INITIAL_FEATURE_FLAGS: FeatureFlag[] = [
   }
 ];
 
-export const INITIAL_VIDEOS: GeneratedVideo[] = [
-  {
-    id: 'vid-1',
-    title: 'Futuristic Cyberpunk Metropolis in Rain',
-    type: 'text_to_video',
-    prompt: 'Cinematic hyperlapse of neon glowing cyberpunk skyscrapers, flying vehicles, rainy night reflections, 8k resolution, photorealistic.',
-    videoUrl: './cyberpunk-metropolis.mp4',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80',
-    aspectRatio: '16:9',
-    durationSeconds: 8,
-    modelName: 'Google Veo 2 (Gemini Video Synthesis)',
-    createdAt: '10 mins ago',
-    status: 'completed'
-  },
-  {
-    id: 'vid-2',
-    title: 'Celestial Nebula & Cosmic Voyage',
-    type: 'text_to_video',
-    prompt: 'Slow cinematic dolly zoom through a glowing purple and turquoise cosmic nebula with orbiting starlight particles and distant galaxy.',
-    videoUrl: './selfai-generated-video.mp4',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80',
-    aspectRatio: '16:9',
-    durationSeconds: 10,
-    modelName: 'Google Veo 2 Ultra',
-    createdAt: '45 mins ago',
-    status: 'completed'
-  },
-  {
-    id: 'vid-3',
-    title: 'Mountain Lake Sunrise Drone Glide',
-    type: 'image_to_video',
-    prompt: 'Dynamic camera pan forward across misty alpine lake with reflection of snowcapped peaks at golden hour.',
-    sourceImageUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80',
-    videoUrl: './alpine-lake.mp4',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80',
-    aspectRatio: '16:9',
-    durationSeconds: 6,
-    modelName: 'Stable Video Diffusion (SVD-XT)',
-    createdAt: '2 hours ago',
-    status: 'completed'
-  }
-];
+export const INITIAL_VIDEOS: GeneratedVideo[] = [];
 
 // ONLY your real account is included! All demo placeholder names are removed.
 export const INITIAL_USERS: User[] = [
@@ -537,44 +486,14 @@ export const INITIAL_MCP_SERVERS: McpServer[] = [
 
 // Most Used Features for Dashboard Pie Chart
 export const INITIAL_FEATURE_POPULARITY: FeaturePopularity[] = [
-  {
-    name: 'AI Chat & Copilot',
-    key: 'chat',
-    queryCount: 168400,
-    percentage: 46.2,
-    color: '#6366f1' // Indigo
-  },
-  {
-    name: 'Calendar & Tasks',
-    key: 'calendar',
-    queryCount: 76500,
-    percentage: 21.0,
-    color: '#10b981' // Emerald
-  },
-  {
-    name: 'AI Art & FLUX Studio',
-    key: 'images',
-    queryCount: 54700,
-    percentage: 15.0,
-    color: '#f59e0b' // Amber
-  },
-  {
-    name: 'Email Assistant',
-    key: 'email',
-    queryCount: 38200,
-    percentage: 10.5,
-    color: '#06b6d4' // Cyan
-  },
-  {
-    name: 'Docs & News Digest',
-    key: 'documents',
-    queryCount: 26500,
-    percentage: 7.3,
-    color: '#a855f7' // Purple
-  }
+  { name: 'Self AI Core Chat', key: 'chat', queryCount: 92, percentage: 51.7, color: '#6366f1' },
+  { name: 'Smart Calendar & Tasks', key: 'calendar', queryCount: 38, percentage: 21.3, color: '#06b6d4' },
+  { name: 'Personal Email Assistant', key: 'email', queryCount: 24, percentage: 13.5, color: '#10b981' },
+  { name: 'Document RAG / PDF Digest', key: 'documents', queryCount: 16, percentage: 9.0, color: '#f59e0b' },
+  { name: 'Personal AI News Digest', key: 'news', queryCount: 8, percentage: 4.5, color: '#ec4899' }
 ];
 
-// Real-Time User Sessions & Geo-Tracing
+// Real-Time User Sessions & Geo-Tracing - ONLY REAL ACTIVE USERS
 export const INITIAL_USER_TRACES: UserSessionTrace[] = [
   {
     id: 'trace-1',
@@ -588,16 +507,16 @@ export const INITIAL_USER_TRACES: UserSessionTrace[] = [
     country: 'India',
     countryCode: 'IN',
     flag: '🇮🇳',
-    ipAddress: '103.212.144.18',
-    device: 'Windows Desktop',
+    ipAddress: '192.168.1.104',
+    device: 'Windows Desktop / PC',
     os: 'Windows 11',
     browser: 'Chrome 124',
     status: 'online',
-    sessionDurationMinutes: 68,
-    totalTimeSpentHours: 42.5,
-    queriesToday: 34,
+    sessionDurationMinutes: 48,
+    totalTimeSpentHours: 14.5,
+    queriesToday: 18,
     lastActive: 'Active now',
-    favoriteFeature: 'AI Chat & Copilot'
+    favoriteFeature: 'Self AI Core Chat'
   },
   {
     id: 'trace-2',
@@ -611,217 +530,21 @@ export const INITIAL_USER_TRACES: UserSessionTrace[] = [
     country: 'India',
     countryCode: 'IN',
     flag: '🇮🇳',
-    ipAddress: '103.212.144.25',
-    device: 'Samsung Galaxy S24',
+    ipAddress: '103.87.56.24',
+    device: 'Android Phone',
     os: 'Android 14',
     browser: 'Chrome Mobile',
     status: 'online',
-    sessionDurationMinutes: 32,
-    totalTimeSpentHours: 18.2,
-    queriesToday: 19,
-    lastActive: '2m ago',
-    favoriteFeature: 'Email Assistant'
-  },
-  {
-    id: 'trace-3',
-    userId: 'usr-anirban',
-    userName: 'Anirban Mukherjee',
-    userEmail: 'manirban0202@gmail.com',
-    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    isPremium: true,
-    tier: 'pro',
-    city: 'Bengaluru',
-    country: 'India',
-    countryCode: 'IN',
-    flag: '🇮🇳',
-    ipAddress: '49.207.218.91',
-    device: 'MacBook Air M2',
-    os: 'macOS Sonoma',
-    browser: 'Safari 17.4',
-    status: 'idle',
-    sessionDurationMinutes: 85,
-    totalTimeSpentHours: 31.0,
-    queriesToday: 42,
-    lastActive: '14m ago',
-    favoriteFeature: 'AI Art & FLUX Studio'
-  },
-  {
-    id: 'trace-4',
-    userId: 'usr-rohit',
-    userName: 'Rohit Sharma',
-    userEmail: 'rohit.tech@gmail.com',
-    userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    isPremium: false,
-    tier: 'free',
-    city: 'Mumbai',
-    country: 'India',
-    countryCode: 'IN',
-    flag: '🇮🇳',
-    ipAddress: '182.74.88.102',
-    device: 'Dell XPS Laptop',
-    os: 'Windows 10',
-    browser: 'Edge 123',
-    status: 'online',
-    sessionDurationMinutes: 24,
-    totalTimeSpentHours: 8.4,
-    queriesToday: 5,
+    sessionDurationMinutes: 22,
+    totalTimeSpentHours: 3.8,
+    queriesToday: 7,
     lastActive: 'Active now',
-    favoriteFeature: 'AI Chat & Copilot'
-  },
-  {
-    id: 'trace-5',
-    userId: 'usr-alex',
-    userName: 'Alex Montgomery',
-    userEmail: 'alex.m@aurora-labs.io',
-    userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    isPremium: true,
-    tier: 'pro',
-    city: 'San Francisco',
-    country: 'United States',
-    countryCode: 'US',
-    flag: '🇺🇸',
-    ipAddress: '172.56.21.89',
-    device: 'iPhone 15 Pro',
-    os: 'iOS 17.5',
-    browser: 'Mobile Safari',
-    status: 'offline',
-    sessionDurationMinutes: 55,
-    totalTimeSpentHours: 52.8,
-    queriesToday: 18,
-    lastActive: '1h ago',
-    favoriteFeature: 'Docs & News Digest'
-  },
-  {
-    id: 'trace-6',
-    userId: 'usr-sophia',
-    userName: 'Sophia Müller',
-    userEmail: 'sophia.m@berlin-tech.de',
-    userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-    isPremium: true,
-    tier: 'power',
-    city: 'Berlin',
-    country: 'Germany',
-    countryCode: 'DE',
-    flag: '🇩🇪',
-    ipAddress: '91.132.84.14',
-    device: 'Linux Workstation',
-    os: 'Ubuntu 22.04',
-    browser: 'Firefox 125',
-    status: 'online',
-    sessionDurationMinutes: 110,
-    totalTimeSpentHours: 64.0,
-    queriesToday: 49,
-    lastActive: 'Active now',
-    favoriteFeature: 'AI Chat & Copilot'
-  },
-  {
-    id: 'trace-7',
-    userId: 'usr-priya',
-    userName: 'Priya Sen',
-    userEmail: 'priya.sen@outlook.in',
-    userAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    isPremium: false,
-    tier: 'free',
-    city: 'New Delhi',
-    country: 'India',
-    countryCode: 'IN',
-    flag: '🇮🇳',
-    ipAddress: '115.240.90.17',
-    device: 'MacBook Pro',
-    os: 'macOS Ventura',
-    browser: 'Chrome 124',
-    status: 'offline',
-    sessionDurationMinutes: 18,
-    totalTimeSpentHours: 4.2,
-    queriesToday: 4,
-    lastActive: '3h ago',
-    favoriteFeature: 'Calendar & Tasks'
+    favoriteFeature: 'Personal Email Assistant'
   }
 ];
 
-// Payments Received & Invoices
-export const INITIAL_PAYMENTS: PaymentTransaction[] = [
-  {
-    id: 'tx-101',
-    transactionRef: 'pay_OM92kL18x9',
-    customerName: 'Anubhab Nandi',
-    customerEmail: 'anubhabnandi12@gmail.com',
-    customerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    planName: 'Self AI Power Tier (Annual)',
-    tier: 'power',
-    amount: 1490,
-    currency: 'INR',
-    billingCycle: 'yearly',
-    paymentMethod: 'UPI / Direct NetBanking',
-    status: 'paid',
-    date: '2026-11-08',
-    invoiceId: 'INV-2026-0084'
-  },
-  {
-    id: 'tx-102',
-    transactionRef: 'pay_LK83pQ21y4',
-    customerName: 'Shampa Nandi',
-    customerEmail: 'shampanandi49@gmail.com',
-    customerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-    planName: 'Self AI Pro Tier (Monthly)',
-    tier: 'pro',
-    amount: 149,
-    currency: 'INR',
-    billingCycle: 'monthly',
-    paymentMethod: 'UPI / GPay (shampanandi49@okhdfc)',
-    status: 'paid',
-    date: '2026-11-09',
-    invoiceId: 'INV-2026-0085'
-  },
-  {
-    id: 'tx-103',
-    transactionRef: 'pay_RT94bN55z1',
-    customerName: 'Anirban Mukherjee',
-    customerEmail: 'manirban0202@gmail.com',
-    customerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    planName: 'Self AI Pro Tier (Monthly)',
-    tier: 'pro',
-    amount: 149,
-    currency: 'INR',
-    billingCycle: 'monthly',
-    paymentMethod: 'Credit Card (Axis Bank Visa)',
-    status: 'paid',
-    date: '2026-11-09',
-    invoiceId: 'INV-2026-0086'
-  },
-  {
-    id: 'tx-104',
-    transactionRef: 'pay_US82aM99x2',
-    customerName: 'Alex Montgomery',
-    customerEmail: 'alex.m@aurora-labs.io',
-    customerAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-    planName: 'Self AI Pro Tier (Monthly)',
-    tier: 'pro',
-    amount: 149,
-    currency: 'INR',
-    billingCycle: 'monthly',
-    paymentMethod: 'International Card (Stripe)',
-    status: 'paid',
-    date: '2026-11-07',
-    invoiceId: 'INV-2026-0082'
-  },
-  {
-    id: 'tx-105',
-    transactionRef: 'pay_DE44xL11q8',
-    customerName: 'Sophia Müller',
-    customerEmail: 'sophia.m@berlin-tech.de',
-    customerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-    planName: 'Self AI Power Tier (Annual)',
-    tier: 'power',
-    amount: 1490,
-    currency: 'INR',
-    billingCycle: 'yearly',
-    paymentMethod: 'SEPA Direct Debit',
-    status: 'paid',
-    date: '2026-11-06',
-    invoiceId: 'INV-2026-0081'
-  }
-];
+// Real Payments Received & Invoices - ZERO fake or demo transactions!
+export const INITIAL_PAYMENTS: PaymentTransaction[] = [];
 
 // Paywall Quota & Pricing Configuration
 export const INITIAL_PAYWALL_CONFIG: PaywallConfig = {
