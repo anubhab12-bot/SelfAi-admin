@@ -26,12 +26,6 @@ export const Sidebar: React.FC = () => {
       badge: null
     },
     {
-      id: 'agentic',
-      label: 'Agentic AI & MCP',
-      icon: Bot,
-      badge: 'Agent'
-    },
-    {
       id: 'features',
       label: 'Feature Controls',
       icon: ToggleLeft,

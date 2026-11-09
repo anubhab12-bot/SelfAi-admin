@@ -7,13 +7,11 @@ import { ToastContainer } from './components/layout/ToastContainer';
 // All 7 Rich & Intuitive Pages
 import { Dashboard } from './pages/Dashboard';
 import { FeatureControl } from './pages/FeatureControl';
-import { VideoStudio } from './pages/VideoStudio';
 import { RbacUsers } from './pages/RbacUsers';
 import { SystemMonitoring } from './pages/SystemMonitoring';
 import { AuditLogs } from './pages/AuditLogs';
 import { Settings } from './pages/Settings';
 import { AcceptInvite } from './pages/AcceptInvite';
-import { AgenticMcpStudio } from './pages/AgenticMcpStudio';
 
 const AppContent: React.FC = () => {
   const { activeTab } = useAdmin();
@@ -44,12 +42,8 @@ const AppContent: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
-      case 'agentic':
-        return <AgenticMcpStudio />;
       case 'features':
         return <FeatureControl />;
-      case 'video':
-        return <VideoStudio />;
       case 'team':
         return <RbacUsers />;
       case 'monitoring':
