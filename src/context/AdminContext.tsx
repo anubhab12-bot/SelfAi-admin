@@ -158,7 +158,20 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load videos
   const [videos, setVideos] = useState<GeneratedVideo[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.VIDEOS);
-    return saved ? JSON.parse(saved) : INITIAL_VIDEOS;
+    if (saved) {
+      try {
+        const parsed: GeneratedVideo[] = JSON.parse(saved);
+        return parsed.map((v) => {
+          if (v.videoUrl.includes('commondatastorage.googleapis.com')) {
+            return { ...v, videoUrl: './selfai-generated-video.mp4' };
+          }
+          return v;
+        });
+      } catch (e) {
+        // fallback
+      }
+    }
+    return INITIAL_VIDEOS;
   });
 
   const [services, setServices] = useState<ServiceHealth[]>(INITIAL_SERVICES);
@@ -655,19 +668,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Video Generation Implementation
   const sampleClips = [
     {
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      videoUrl: './cyberpunk-metropolis.mp4',
       thumb: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=600&auto=format&fit=crop&q=80'
     },
     {
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+      videoUrl: './selfai-generated-video.mp4',
       thumb: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80'
     },
     {
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-      thumb: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80'
-    },
-    {
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      videoUrl: './alpine-lake.mp4',
       thumb: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop&q=80'
     }
   ];

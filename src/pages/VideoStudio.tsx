@@ -470,9 +470,7 @@ export const VideoStudio: React.FC = () => {
                       <a
                         href={activeVideo.videoUrl}
                         download={`selfai-video-${activeVideo.id}.mp4`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm shrink-0"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm shrink-0 cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Download MP4</span>
