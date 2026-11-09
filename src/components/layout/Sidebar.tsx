@@ -38,12 +38,6 @@ export const Sidebar: React.FC = () => {
       badge: `${enabledCount} Active`
     },
     {
-      id: 'video',
-      label: 'AI Video Studio',
-      icon: Film,
-      badge: 'AI Engine'
-    },
-    {
       id: 'team',
       label: 'Team & Invitations (RBAC)',
       icon: Users,

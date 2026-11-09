@@ -146,10 +146,16 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(true);
   const [liveLatencyMs, setLiveLatencyMs] = useState<number>(185);
 
-  // Load features
+  // Load features - purge any stripe or video remnants
   const [features, setFeatures] = useState<FeatureFlag[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.FEATURES);
-    return saved ? JSON.parse(saved) : INITIAL_FEATURE_FLAGS;
+    let list: FeatureFlag[] = saved ? JSON.parse(saved) : INITIAL_FEATURE_FLAGS;
+    list = list.filter(
+      (f) =>
+        !['stripe_checkout', 'ai_video_studio', 'video_generation_engine', 'feat-video'].includes(f.key) &&
+        f.id !== 'feat-video'
+    );
+    return list;
   });
 
   // Load users - filter out any placeholder demo names
@@ -200,10 +206,46 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [modelUsage] = useState<ModelUsage[]>(INITIAL_MODEL_BREAKDOWN);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Sync state to LocalStorage
+  // Sync features list directly to Railway Backend so the main app always matches Admin
+  const syncFeaturesToRailway = async (feats: FeatureFlag[]) => {
+    try {
+      const activePayload = feats
+        .filter(
+          (f) =>
+            !['stripe_checkout', 'ai_video_studio', 'video_generation_engine', 'feat-video'].includes(f.key) &&
+            f.id !== 'feat-video'
+        )
+        .map((f) => ({
+          key: f.key,
+          name: f.name,
+          icon: f.key.includes('theme')
+            ? 'palette'
+            : f.key.includes('pdf') || f.key.includes('doc')
+            ? 'file'
+            : f.key.includes('chat')
+            ? 'chat'
+            : f.key.includes('mail')
+            ? 'mail'
+            : 'sparkle',
+          description: f.description,
+          enabled: f.enabled,
+          category: f.category,
+          route: `/features/${f.key}`,
+        }));
+
+      await fetch(`${railwayUrl}/api/admin/features/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features: activePayload }),
+      });
+    } catch (_) {}
+  };
+
+  // Sync state to LocalStorage and Railway
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.FEATURES, JSON.stringify(features));
-  }, [features]);
+    syncFeaturesToRailway(features);
+  }, [features, railwayUrl]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
@@ -463,7 +505,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         description: newFeature.description,
         enabled: newFeature.enabled,
         category: newFeature.category,
-        icon: newFeature.key.includes('video') ? 'video' : newFeature.key.includes('stripe') || newFeature.key.includes('pay') ? 'credit-card' : 'sparkle',
+        icon: newFeature.key.includes('theme')
+          ? 'palette'
+          : newFeature.key.includes('pdf') || newFeature.key.includes('doc')
+          ? 'file'
+          : newFeature.key.includes('chat')
+          ? 'chat'
+          : newFeature.key.includes('mail')
+          ? 'mail'
+          : 'sparkle',
         route: `/features/${newFeature.key}`
       })
     }).catch(() => {});
@@ -506,9 +556,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const target = features.find((f) => f.id === id);
     if (!target) return;
 
-    setFeatures((prev) => prev.filter((f) => f.id !== id));
+    const remaining = features.filter((f) => f.id !== id);
+    setFeatures(remaining);
+
+    // Call Railway backend to delete immediately and sync
+    fetch(`${railwayUrl}/api/admin/features/${target.key}/delete`, { method: 'POST' }).catch(() => {});
+    syncFeaturesToRailway(remaining);
+
     logAudit('DELETE_FEATURE_FLAG', 'feature_flag', target.key, `Permanently removed feature flag "${target.name}"`);
-    addToast('warning', 'Feature Deleted', `Feature "${target.name}" has been removed.`);
+    addToast('warning', 'Feature Deleted', `Feature "${target.name}" has been removed from Admin and Main App.`);
   };
 
   // User Management Operations
@@ -964,7 +1020,15 @@ export const ${titleCase.replace(/[^a-zA-Z0-9]/g, '')}Module: React.FC = () => {
           description: `Autonomous feature auto-engineered from: "${prompt}"`,
           enabled: true,
           category: 'ai_models',
-          icon: cleanKey.includes('video') ? 'video' : cleanKey.includes('stripe') || cleanKey.includes('pay') ? 'credit-card' : 'sparkle',
+          icon: cleanKey.includes('theme')
+            ? 'palette'
+            : cleanKey.includes('pdf') || cleanKey.includes('doc')
+            ? 'file'
+            : cleanKey.includes('chat')
+            ? 'chat'
+            : cleanKey.includes('mail')
+            ? 'mail'
+            : 'sparkle',
           route: `/features/${cleanKey}`
         })
       });

@@ -281,22 +281,6 @@ export const INITIAL_FEATURE_FLAGS: FeatureFlag[] = [
     updatedAt: '2026-11-09',
     updatedBy: 'Anubhab Nandi',
     tags: ['news', 'docs', 'summarizer']
-  },
-  {
-    id: 'feat-video',
-    name: 'AI Video Studio (Text & Image to Video)',
-    key: 'video_generation_engine',
-    description: 'Autonomous Text-to-Video & Image-to-Video synthesis powered by Google Veo & Stable Video Diffusion models.',
-    category: 'ai_models',
-    enabled: true,
-    rolloutPercentage: 100,
-    targetRoles: ['super_admin', 'admin', 'product_manager'],
-    environment: 'production',
-    createdBy: 'Anubhab Nandi',
-    createdAt: '2026-11-09',
-    updatedAt: '2026-11-09',
-    updatedBy: 'Anubhab Nandi',
-    tags: ['video', 'text-to-video', 'image-to-video', 'veo', 'synthesis']
   }
 ];
 
