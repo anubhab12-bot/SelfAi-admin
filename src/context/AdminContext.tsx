@@ -149,7 +149,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (saved as Role) || 'super_admin';
   });
 
-  const VALID_TABS = ['dashboard', 'telemetry', 'billing', 'features', 'team', 'monitoring', 'audit', 'settings'];
+  const VALID_TABS = ['dashboard', 'telemetry', 'billing', 'team', 'monitoring', 'audit', 'settings'];
 
   const getTabFromUrl = (): string => {
     const raw = window.location.hash.replace(/^#\/?/, '').split('?')[0];

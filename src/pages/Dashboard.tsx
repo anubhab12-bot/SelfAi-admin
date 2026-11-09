@@ -542,10 +542,10 @@ export const Dashboard: React.FC = () => {
                 <span>Quick Feature Controls</span>
               </h3>
               <button
-                onClick={() => setActiveTab('features')}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+                onClick={() => setActiveTab('billing')}
+                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 cursor-pointer"
               >
-                <span>All Features ({features.length})</span>
+                <span>Paywall Rules</span>
                 <ArrowRight className="w-3 h-3" />
               </button>
             </div>

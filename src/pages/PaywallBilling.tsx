@@ -116,10 +116,10 @@ export const PaywallBilling: React.FC = () => {
       category: 'Core AI'
     },
     {
-      key: 'guest_chat_sandbox',
-      name: 'Guest Trial Access Gateway',
-      desc: 'Allows non-registered visitors to test the chatbot with rate caps',
-      category: 'Public Gateway'
+      key: 'news',
+      name: 'Personal AI News Digest',
+      desc: 'Real-time personalized news curation, daily briefing, and article highlights',
+      category: 'Insights'
     }
   ];
 

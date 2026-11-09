@@ -3,7 +3,6 @@ import { useAdmin } from '../../context/AdminContext';
 import { 
   LayoutDashboard, 
   Bot,
-  ToggleLeft, 
   Film,
   Users, 
   Activity,
@@ -16,9 +15,7 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { activeTab, setActiveTab, features, railwayUrl } = useAdmin();
-
-  const enabledCount = features.filter((f) => f.enabled).length;
+  const { activeTab, setActiveTab, railwayUrl } = useAdmin();
 
   const navItems = [
     {
@@ -38,12 +35,6 @@ export const Sidebar: React.FC = () => {
       label: 'Payments & Paywalls',
       icon: CreditCard,
       badge: '₹ Pro'
-    },
-    {
-      id: 'features',
-      label: 'Feature Controls',
-      icon: ToggleLeft,
-      badge: `${enabledCount} Active`
     },
     {
       id: 'team',
