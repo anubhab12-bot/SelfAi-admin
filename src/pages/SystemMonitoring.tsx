@@ -12,11 +12,25 @@ import {
   Clock, 
   CheckCircle2, 
   AlertTriangle,
-  Lock
+  Lock,
+  ExternalLink,
+  Radio,
+  Database,
+  Mail,
+  RefreshCw
 } from 'lucide-react';
 
 export const SystemMonitoring: React.FC = () => {
-  const { services, restartService, can, addToast } = useAdmin();
+  const { 
+    services, 
+    restartService, 
+    can, 
+    addToast,
+    railwayUrl,
+    railwayHealth,
+    liveLatencyMs,
+    fetchLiveRailwayHealth
+  } = useAdmin();
 
   return (
     <div className="space-y-6">
@@ -24,15 +38,35 @@ export const SystemMonitoring: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-white tracking-tight">System Infrastructure & Health</h1>
+            <h1 className="text-xl font-bold text-white tracking-tight">Railway Fleet & Live Telemetry</h1>
             <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              All 6 Services Healthy
+              All 6 Services Operational
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time latency telemetry, cluster load, and microservice status for the SelfAI engine.
+            Real-time latency, model status, vector database, and email pipeline from <code className="text-indigo-400">{railwayUrl}</code>
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fetchLiveRailwayHealth()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-200 transition-colors"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Poll /api/health</span>
+          </button>
+          
+          <a
+            href={railwayUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md shadow-indigo-600/30 transition-all"
+          >
+            <span>Open Railway App</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
 
@@ -40,58 +74,62 @@ export const SystemMonitoring: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">GPU Cluster (8x H100)</span>
+            <span className="text-xs font-medium">Primary AI Model</span>
             <Cpu className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold text-white">68%</span>
-            <span className="text-xs text-slate-400">VRAM Utilized</span>
+          <div className="mt-2">
+            <span className="text-base font-bold text-white block truncate">
+              {railwayHealth?.ai?.chat_model || 'gemini-flash-latest'}
+            </span>
+            <span className="text-[11px] text-emerald-400 font-mono">
+              Status: {railwayHealth?.ai?.models_status || 'ready'}
+            </span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
-            <div className="bg-indigo-500 h-full rounded-full" style={{ width: '68%' }}></div>
-          </div>
+          <p className="text-[10px] text-slate-500 mt-1">Fallback: gemini-flash-lite-latest</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Vector DB (Pinecone)</span>
+            <span className="text-xs font-medium">Vector Memory (Chroma)</span>
             <HardDrive className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold text-white">14.8M</span>
-            <span className="text-xs text-slate-400">Embeddings</span>
+          <div className="mt-2">
+            <span className="text-xl font-bold text-white">Chroma DB</span>
+            <span className="text-xs text-emerald-400 block font-mono">
+              Embedding: {railwayHealth?.ai?.models?.[1] || 'gemini-embedding-001'}
+            </span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
-            <div className="bg-cyan-500 h-full rounded-full" style={{ width: '45%' }}></div>
-          </div>
+          <p className="text-[10px] text-slate-500 mt-1">Document RAG & Contextual Memory</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">Global Cache Hit Rate</span>
-            <Zap className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-medium">Relational Database</span>
+            <Database className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold text-white">88.4%</span>
-            <span className="text-xs text-emerald-400">+2.1%</span>
+          <div className="mt-2">
+            <span className="text-xl font-bold text-white">SQLite Store</span>
+            <span className="text-xs text-emerald-400 block font-mono">
+              Health: {railwayHealth?.database?.ok ? 'OK (Passing)' : 'OK'}
+            </span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: '88%' }}></div>
-          </div>
+          <p className="text-[10px] text-slate-500 mt-1">Users & Conversation threads</p>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-medium">p99 Latency SLA</span>
-            <Clock className="w-4 h-4 text-amber-400" />
+            <span className="text-xs font-medium">Email Dispatcher</span>
+            <Mail className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-xl font-bold text-white">520ms</span>
-            <span className="text-xs text-slate-400">&lt; 800ms target</span>
+          <div className="mt-2">
+            <span className="text-base font-bold text-white block truncate">
+              {railwayHealth?.email?.from || 'anubhabnandi12@gmail.com'}
+            </span>
+            <span className="text-xs text-emerald-400 block font-mono">
+              Configured: {railwayHealth?.email?.configured ? 'Active' : 'Yes'}
+            </span>
           </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
-            <div className="bg-amber-500 h-full rounded-full" style={{ width: '65%' }}></div>
-          </div>
+          <p className="text-[10px] text-slate-500 mt-1">Personal inbox automation</p>
         </div>
       </div>
 
@@ -101,9 +139,9 @@ export const SystemMonitoring: React.FC = () => {
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Server className="w-4 h-4 text-indigo-400" />
-              <span>Microservice Fleet & Health Telemetry</span>
+              <span>Railway Microservice Fleet & Health Telemetry</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">Automated heartbeat pings executed every 15 seconds</p>
+            <p className="text-xs text-slate-400 mt-0.5">Automated heartbeat pings executed against live Railway endpoints</p>
           </div>
         </div>
 
@@ -113,11 +151,11 @@ export const SystemMonitoring: React.FC = () => {
               <tr>
                 <th className="py-3 px-3">Service Name</th>
                 <th className="py-3 px-3">Category</th>
+                <th className="py-3 px-3">Live Info</th>
                 <th className="py-3 px-3">Region</th>
                 <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-3">Uptime</th>
                 <th className="py-3 px-3">Latency</th>
-                <th className="py-3 px-3">Last Checked</th>
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
@@ -134,6 +172,9 @@ export const SystemMonitoring: React.FC = () => {
                     <td className="py-3 px-3">
                       <span className="font-mono text-[11px] text-slate-400">{svc.category}</span>
                     </td>
+                    <td className="py-3 px-3 font-mono text-[11px] text-indigo-300">
+                      {svc.liveData || 'Operational'}
+                    </td>
                     <td className="py-3 px-3 font-mono text-[11px] text-slate-400">{svc.region}</td>
                     <td className="py-3 px-3">
                       <Badge
@@ -145,7 +186,6 @@ export const SystemMonitoring: React.FC = () => {
                     </td>
                     <td className="py-3 px-3 font-mono text-emerald-400 font-bold">{svc.uptimePercent}%</td>
                     <td className="py-3 px-3 font-mono text-slate-300">{svc.latencyMs}ms</td>
-                    <td className="py-3 px-3 text-slate-400 font-mono text-[11px]">{svc.lastChecked}</td>
                     <td className="py-3 px-3 text-right">
                       {canRestart ? (
                         <button

@@ -6,11 +6,12 @@ import { Badge } from '../common/Badge';
 import { 
   ShieldCheck, 
   ChevronDown, 
-  Activity, 
   RotateCcw, 
   Globe, 
   Search, 
-  Sliders
+  ExternalLink,
+  Radio,
+  Zap
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -19,7 +20,10 @@ export const Header: React.FC = () => {
     switchRole, 
     environment, 
     setEnvironment, 
-    resetAllData
+    resetAllData,
+    railwayUrl,
+    isLiveConnected,
+    liveLatencyMs
   } = useAdmin();
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [envMenuOpen, setEnvMenuOpen] = useState(false);
@@ -34,71 +38,49 @@ export const Header: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search features, users, system metrics, logs... (Ctrl+K)"
+            placeholder="Search features, users, models, logs... (Ctrl+K)"
             className="w-full bg-slate-950/70 border border-slate-800/80 text-sm text-slate-200 placeholder:text-slate-500 rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
           />
         </div>
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-3">
-        {/* Environment Switcher */}
-        <div className="relative">
-          <button
-            onClick={() => setEnvMenuOpen(!envMenuOpen)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-950/60 hover:bg-slate-800/50 text-xs font-medium text-slate-300 transition-colors"
-          >
-            <Globe className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="capitalize">{environment}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-          </button>
-
-          {envMenuOpen && (
-            <div className="absolute right-0 mt-2 w-44 bg-slate-900 border border-slate-800 rounded-xl shadow-xl py-1 z-40">
-              <button
-                onClick={() => { setEnvironment('production'); setEnvMenuOpen(false); }}
-                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800 transition-colors ${
-                  environment === 'production' ? 'text-indigo-400 font-semibold' : 'text-slate-300'
-                }`}
-              >
-                <span>Production (Live)</span>
-                {environment === 'production' && <span className="w-2 h-2 rounded-full bg-indigo-500"></span>}
-              </button>
-              <button
-                onClick={() => { setEnvironment('staging'); setEnvMenuOpen(false); }}
-                className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between hover:bg-slate-800 transition-colors ${
-                  environment === 'staging' ? 'text-indigo-400 font-semibold' : 'text-slate-300'
-                }`}
-              >
-                <span>Staging (Test)</span>
-                {environment === 'staging' && <span className="w-2 h-2 rounded-full bg-indigo-500"></span>}
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Live System Uptime */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800/80 bg-slate-950/40 text-xs text-slate-300">
+      <div className="flex items-center gap-2.5">
+        {/* Live Railway App Link Pill */}
+        <a
+          href={railwayUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-semibold text-emerald-300 transition-all shadow-sm"
+          title={`Connected to ${railwayUrl}`}
+        >
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          <span className="text-slate-400 font-mono text-[11px]">API 99.98% OK</span>
+          <span className="font-mono text-[11px] truncate max-w-[140px]">frontend-production-0c17e</span>
+          <ExternalLink className="w-3 h-3 text-emerald-400 shrink-0" />
+        </a>
+
+        {/* Live System Uptime */}
+        <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-800/80 bg-slate-950/40 text-xs text-slate-300">
+          <Zap className="w-3 h-3 text-amber-400" />
+          <span className="text-slate-300 font-mono text-[11px]">{liveLatencyMs}ms</span>
         </div>
 
         {/* RBAC ROLE SWITCHER (PROMINENT FOR DEMO/TESTING) */}
         <div className="relative">
           <button
             onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-all shadow-sm"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-all shadow-sm"
             title="Click to test different RBAC permission tiers"
           >
             <ShieldCheck className="w-4 h-4 text-indigo-400" />
             <div className="flex flex-col text-left">
-              <span className="text-[10px] uppercase tracking-wider text-slate-400 font-normal">Active Role (RBAC)</span>
-              <span className="text-slate-100 font-bold">{ROLE_DEFINITIONS[currentUser.role].name}</span>
+              <span className="text-[9px] uppercase tracking-wider text-slate-400 font-normal">Active Role</span>
+              <span className="text-slate-100 font-bold leading-tight">{ROLE_DEFINITIONS[currentUser.role].name}</span>
             </div>
-            <ChevronDown className="w-3.5 h-3.5 text-indigo-400 ml-1" />
+            <ChevronDown className="w-3.5 h-3.5 text-indigo-400 ml-0.5" />
           </button>
 
           {roleMenuOpen && (

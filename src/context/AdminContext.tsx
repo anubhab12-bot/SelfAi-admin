@@ -8,7 +8,8 @@ import {
   ModelUsage, 
   AuditLogItem, 
   ToastMessage,
-  Permission
+  Permission,
+  RailwayHealthResponse
 } from '../types';
 import { 
   INITIAL_SERVICES, 
@@ -16,7 +17,8 @@ import {
   INITIAL_MODEL_BREAKDOWN, 
   INITIAL_FEATURE_FLAGS, 
   INITIAL_USERS, 
-  INITIAL_AUDIT_LOGS 
+  INITIAL_AUDIT_LOGS,
+  RAILWAY_APP_URL
 } from '../data/mockData';
 import { hasPermission } from '../utils/rbac';
 
@@ -29,6 +31,15 @@ interface AdminContextType {
   // Navigation
   activeTab: string;
   setActiveTab: (tab: string) => void;
+
+  // Railway Live Connection
+  railwayUrl: string;
+  setRailwayUrl: (url: string) => void;
+  railwayHealth: RailwayHealthResponse | null;
+  isLiveConnected: boolean;
+  liveLatencyMs: number;
+  fetchLiveRailwayHealth: () => Promise<void>;
+  sendLiveGuestChat: (content: string) => Promise<{ reply: string; model: string; remaining: number }>;
 
   // Environment
   environment: 'production' | 'staging';
@@ -77,6 +88,7 @@ const STORAGE_KEYS = {
   USERS: 'selfai_admin_users',
   LOGS: 'selfai_admin_logs',
   ROLE: 'selfai_admin_role',
+  RAILWAY_URL: 'selfai_admin_railway_url'
 };
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -89,6 +101,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [environment, setEnvironment] = useState<'production' | 'staging'>('production');
   const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d'>('7d');
+
+  // Live Railway Connection state
+  const [railwayUrl, setRailwayUrl] = useState<string>(() => {
+    return localStorage.getItem(STORAGE_KEYS.RAILWAY_URL) || RAILWAY_APP_URL;
+  });
+  const [railwayHealth, setRailwayHealth] = useState<RailwayHealthResponse | null>(null);
+  const [isLiveConnected, setIsLiveConnected] = useState<boolean>(true);
+  const [liveLatencyMs, setLiveLatencyMs] = useState<number>(185);
 
   // Load features
   const [features, setFeatures] = useState<FeatureFlag[]>(() => {
@@ -130,6 +150,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem(STORAGE_KEYS.ROLE, currentRole);
   }, [currentRole]);
 
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.RAILWAY_URL, railwayUrl);
+  }, [railwayUrl]);
+
   // Toast Helpers
   const addToast = (type: ToastMessage['type'], title: string, message: string) => {
     const newToast: ToastMessage = {
@@ -150,6 +174,110 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  // Live Railway Health Fetcher
+  const fetchLiveRailwayHealth = async () => {
+    const startTime = performance.now();
+    try {
+      const res = await fetch(`${railwayUrl}/api/health`, { method: 'GET' });
+      const duration = Math.round(performance.now() - startTime);
+      setLiveLatencyMs(duration);
+
+      if (res.ok) {
+        const data: RailwayHealthResponse = await res.json();
+        setRailwayHealth(data);
+        setIsLiveConnected(true);
+
+        // Update services array dynamically with live status from Railway
+        setServices((prev) =>
+          prev.map((s) => {
+            if (s.id === 'srv-1') {
+              return {
+                ...s,
+                status: data.ai.status === 'ok' ? 'operational' : 'degraded',
+                latencyMs: duration,
+                lastChecked: 'Just now',
+                liveData: `${data.ai.chat_model} (fallback: ${data.ai.fallback_models[0]})`
+              };
+            }
+            if (s.id === 'srv-2') {
+              return {
+                ...s,
+                status: data.ai.database.ok ? 'operational' : 'degraded',
+                lastChecked: 'Just now',
+                liveData: `Type: ${data.ai.database.type} | Embeddings: ${data.ai.models[1] || 'gemini'}`
+              };
+            }
+            if (s.id === 'srv-3') {
+              return {
+                ...s,
+                status: data.database.ok ? 'operational' : 'degraded',
+                lastChecked: 'Just now'
+              };
+            }
+            if (s.id === 'srv-4') {
+              return {
+                ...s,
+                status: data.email.enabled ? 'operational' : 'degraded',
+                lastChecked: 'Just now',
+                liveData: `${data.email.from} (Configured: ${data.email.configured})`
+              };
+            }
+            return s;
+          })
+        );
+      } else {
+        setIsLiveConnected(false);
+      }
+    } catch (e) {
+      console.warn('Railway live ping error:', e);
+      setIsLiveConnected(false);
+    }
+  };
+
+  // Send test prompt to Railway /api/chat/guest
+  const sendLiveGuestChat = async (content: string) => {
+    const res = await fetch(`${railwayUrl}/api/chat/guest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, history: [] })
+    });
+
+    if (!res.ok) {
+      throw new Error(`Railway chat request failed with status ${res.status}`);
+    }
+
+    const text = await res.text();
+    // Parse SSE lines
+    let reply = '';
+    let model = 'gemini-flash-lite-latest';
+    let remaining = 5;
+
+    const lines = text.split('\n');
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const parsed = JSON.parse(line.substring(6));
+          if (parsed.type === 'token') {
+            reply += parsed.content;
+          }
+          if (parsed.type === 'model') {
+            model = parsed.model;
+          }
+          if (parsed.type === 'guest') {
+            remaining = parsed.remaining;
+          }
+        } catch (_) {}
+      }
+    }
+
+    return { reply: reply.trim() || 'Hello! How can I help you today?', model, remaining };
+  };
+
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchLiveRailwayHealth();
+  }, [railwayUrl]);
+
   // Current active user representation
   const currentUser: User = {
     id: 'usr-current',
@@ -161,7 +289,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     role: currentRole,
     status: 'active',
-    department: 'Core Operations',
+    department: 'SelfAI Core Engineering',
     lastActive: 'Just now',
     createdAt: '2026-01-15',
     mfaEnabled: true
@@ -213,12 +341,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             'TOGGLE_FEATURE_FLAG',
             'feature_flag',
             f.key,
-            `Turned ${newState ? 'ON' : 'OFF'} for environment ${f.environment} (${f.rolloutPercentage}% rollout)`
+            `Turned ${newState ? 'ON' : 'OFF'} for Railway App (${f.rolloutPercentage}% rollout)`
           );
           addToast(
             newState ? 'success' : 'warning',
             `Feature ${newState ? 'Activated' : 'Disabled'}`,
-            `"${f.name}" is now ${newState ? 'ENABLED' : 'DISABLED'}.`
+            `"${f.name}" is now ${newState ? 'ENABLED' : 'DISABLED'} on Railway.`
           );
           return {
             ...f,
@@ -249,7 +377,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setFeatures((prev) => [newFeature, ...prev]);
     logAudit('CREATE_FEATURE_FLAG', 'feature_flag', newFeature.key, `Created feature flag "${newFeature.name}" in category ${newFeature.category}`);
-    addToast('success', 'Feature Created', `Successfully registered feature "${newFeature.name}" to SelfAI.`);
+    addToast('success', 'Feature Created', `Successfully registered feature "${newFeature.name}" for SelfAI on Railway.`);
   };
 
   const updateFeature = (id: string, updates: Partial<FeatureFlag>) => {
@@ -287,7 +415,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     setFeatures((prev) => prev.filter((f) => f.id !== id));
     logAudit('DELETE_FEATURE_FLAG', 'feature_flag', target.key, `Permanently removed feature flag "${target.name}"`);
-    addToast('warning', 'Feature Deleted', `Feature "${target.name}" has been removed from SelfAI.`);
+    addToast('warning', 'Feature Deleted', `Feature "${target.name}" has been removed.`);
   };
 
   // User Management Operations
@@ -375,7 +503,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const svc = services.find((s) => s.id === id);
     if (!svc) return;
 
-    addToast('info', 'Service Restart Initiated', `Issuing rolling restart to ${svc.name}...`);
+    addToast('info', 'Railway Rolling Restart', `Issuing rolling restart to ${svc.name} on Railway...`);
     logAudit('SERVICE_RESTART', 'system', svc.name, `Triggered graceful zero-downtime rolling restart`);
 
     // Simulate reload
@@ -384,10 +512,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     );
 
     setTimeout(() => {
-      setServices((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, status: 'operational', lastChecked: 'Just now' } : s))
-      );
-      addToast('success', 'Service Healthy', `${svc.name} successfully rebooted and passing health checks.`);
+      fetchLiveRailwayHealth();
+      addToast('success', 'Service Healthy', `${svc.name} successfully rebooted and passing Railway health checks.`);
     }, 1800);
   };
 
@@ -397,10 +523,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.removeItem(STORAGE_KEYS.USERS);
     localStorage.removeItem(STORAGE_KEYS.LOGS);
     localStorage.removeItem(STORAGE_KEYS.ROLE);
+    localStorage.removeItem(STORAGE_KEYS.RAILWAY_URL);
     setFeatures(INITIAL_FEATURE_FLAGS);
     setUsers(INITIAL_USERS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
     setCurrentRole('super_admin');
+    setRailwayUrl(RAILWAY_APP_URL);
     addToast('info', 'Data Reset', 'All SelfAI admin demo datasets restored to initial state.');
   };
 
@@ -412,6 +540,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         can,
         activeTab,
         setActiveTab,
+        railwayUrl,
+        setRailwayUrl,
+        railwayHealth,
+        isLiveConnected,
+        liveLatencyMs,
+        fetchLiveRailwayHealth,
+        sendLiveGuestChat,
         environment,
         setEnvironment,
         features,

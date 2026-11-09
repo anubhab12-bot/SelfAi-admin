@@ -72,12 +72,42 @@ export interface User {
 export interface ServiceHealth {
   id: string;
   name: string;
-  category: 'inference' | 'database' | 'gateway' | 'cache' | 'billing';
+  category: 'inference' | 'database' | 'gateway' | 'cache' | 'billing' | 'email';
   status: 'operational' | 'degraded' | 'down' | 'maintenance';
   uptimePercent: number;
   latencyMs: number;
   lastChecked: string;
   region: string;
+  liveData?: string;
+}
+
+export interface RailwayHealthResponse {
+  backend: string;
+  version: string;
+  database: {
+    type: string;
+    ok: boolean;
+  };
+  email: {
+    enabled: boolean;
+    configured: boolean;
+    from: string;
+  };
+  ai: {
+    status: string;
+    ollama: string;
+    models: string[];
+    database: {
+      type: string;
+      ok: boolean;
+    };
+    provider: string;
+    version: string;
+    chat_model: string;
+    fallback_models: string[];
+    models_status: string;
+    cpu_only: boolean;
+  };
 }
 
 export interface DailyUsage {
