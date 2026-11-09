@@ -132,7 +132,7 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  FEATURES: 'selfai_admin_features',
+  FEATURES: 'selfai_admin_features_v4',
   USERS: 'selfai_admin_users',
   LOGS: 'selfai_admin_logs',
   ROLE: 'selfai_admin_role',

@@ -20,6 +20,19 @@ import {
   Info
 } from 'lucide-react';
 
+export const getFeatureLaunchRoute = (feat: { key: string; route?: string }): string => {
+  const k = (feat.key || '').toLowerCase();
+  if (k.includes('job') || k.includes('career')) return '/jobs';
+  if (k.includes('news')) return '/news';
+  if (k.includes('doc') || k.includes('file') || k.includes('vector') || k.includes('chroma') || k.includes('pdf')) return '/documents';
+  if (k.includes('calendar') || k.includes('task') || k.includes('schedule')) return '/calendar';
+  if (k.includes('email') || k.includes('mail')) return '/email';
+  if (k.includes('image') || k.includes('art') || k.includes('photo')) return '/images';
+  if (k.includes('price') || k.includes('plan') || k.includes('tier') || k.includes('upgrade')) return '/pricing';
+  if (k.includes('setting') || k.includes('pref')) return '/settings';
+  return '/chat';
+};
+
 export const FeatureControl: React.FC = () => {
   const { 
     features, 
@@ -80,7 +93,7 @@ export const FeatureControl: React.FC = () => {
       tags: [key, 'custom_admin_feature'],
       tier: newFeatTier,
       dailyLimit: newFeatTier === 'partially_free' ? newFeatDailyLimit : 0,
-      route: `/features/${key}`,
+      route: getFeatureLaunchRoute({ key }),
       isCustom: true
     });
 
@@ -393,13 +406,13 @@ export const FeatureControl: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   <a
-                    href={`${railwayUrl}${feat.route || `/features/${feat.key}`}`}
+                    href={`${railwayUrl}${getFeatureLaunchRoute(feat)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium bg-indigo-950/40 px-2 py-1 rounded border border-indigo-500/20"
-                    title="Open live feature in the Self AI app"
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-medium bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-500/20"
+                    title={`Directly launch ${feat.name} in Self AI app (${getFeatureLaunchRoute(feat)})`}
                   >
-                    <span>View in App</span>
+                    <span>Launch in App ({getFeatureLaunchRoute(feat)})</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
 
