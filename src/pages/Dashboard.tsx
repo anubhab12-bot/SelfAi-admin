@@ -1,0 +1,429 @@
+import React from 'react';
+import { useAdmin } from '../context/AdminContext';
+import { Badge } from '../components/common/Badge';
+import { 
+  Users, 
+  Zap, 
+  Clock, 
+  Coins, 
+  TrendingUp, 
+  ArrowUpRight, 
+  Server, 
+  Sliders, 
+  Plus, 
+  Download, 
+  CheckCircle, 
+  Sparkles, 
+  ArrowRight,
+  ShieldCheck,
+  Cpu
+} from 'lucide-react';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
+
+export const Dashboard: React.FC = () => {
+  const { 
+    weeklyUsage, 
+    features, 
+    services, 
+    can, 
+    setActiveTab, 
+    toggleFeature, 
+    addToast 
+  } = useAdmin();
+
+  const totalWeeklyQueries = weeklyUsage.reduce((acc: number, curr) => acc + curr.queriesCount, 0);
+  const totalWeeklyTokens = weeklyUsage.reduce((acc: number, curr) => acc + curr.totalTokens, 0);
+  const totalWeeklyCost = weeklyUsage.reduce((acc: number, curr) => acc + curr.costUSD, 0);
+  const latestDay = weeklyUsage[weeklyUsage.length - 1];
+
+  const handleExportSummary = () => {
+    if (!can('dashboard:export')) {
+      addToast('error', 'Access Denied', 'Your role lacks permission to export summary reports.');
+      return;
+    }
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      summary: {
+        totalWeeklyQueries,
+        totalWeeklyTokens,
+        totalWeeklyCost: `$${totalWeeklyCost.toFixed(2)}`,
+        activeFeatures: features.filter((f) => f.enabled).length,
+      },
+      servicesStatus: services
+    }, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `selfai-admin-summary-${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    addToast('success', 'Export Complete', 'SelfAI system summary exported as JSON.');
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Banner / Welcome */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/20 shadow-xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-indigo-500/10 to-transparent pointer-events-none"></div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="p-1 rounded-md bg-indigo-500/20 text-indigo-400">
+              <Sparkles className="w-4 h-4" />
+            </span>
+            <span className="text-xs font-semibold text-indigo-300 uppercase tracking-wider">SelfAI Platform Pulse</span>
+          </div>
+          <h1 className="text-2xl font-black text-white tracking-tight mt-1">
+            Core AI Fleet & Feature Control
+          </h1>
+          <p className="text-sm text-slate-300 mt-1 max-w-2xl">
+            Live telemetry for inference endpoints, automated feature gating, weekly usage metrics, and role-based administration.
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="flex items-center gap-2.5 z-10 shrink-0">
+          <button
+            onClick={() => setActiveTab('feature-control')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg transition-all ${
+              can('features:create')
+                ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
+                : 'bg-slate-800 text-slate-400 cursor-not-allowed opacity-60'
+            }`}
+            title={can('features:create') ? 'Add new feature' : 'Requires features:create permission'}
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Feature</span>
+          </button>
+
+          <button
+            onClick={handleExportSummary}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-200 transition-colors"
+          >
+            <Download className="w-4 h-4 text-slate-400" />
+            <span className="hidden sm:inline">Export Status</span>
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Metric 1 */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-750 transition-all shadow-sm">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">Weekly AI Queries</span>
+            <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Zap className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-white tracking-tight">
+              {(totalWeeklyQueries / 1000).toFixed(1)}k
+            </span>
+            <span className="flex items-center text-xs font-semibold text-emerald-400">
+              <TrendingUp className="w-3.5 h-3.5 mr-0.5" />
+              +14.2%
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Across 5 active AI models</p>
+        </div>
+
+        {/* Metric 2 */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-750 transition-all shadow-sm">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">Active App Users</span>
+            <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <Users className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-white tracking-tight">
+              {latestDay.activeUsers.toLocaleString()}
+            </span>
+            <span className="flex items-center text-xs font-semibold text-emerald-400">
+              <TrendingUp className="w-3.5 h-3.5 mr-0.5" />
+              +8.9%
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Unique users active in last 24h</p>
+        </div>
+
+        {/* Metric 3 */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-750 transition-all shadow-sm">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">Inference Latency (p50)</span>
+            <span className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              <Clock className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-white tracking-tight">
+              {latestDay.avgLatencyMs}ms
+            </span>
+            <span className="text-xs font-semibold text-emerald-400">
+              -18ms faster
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">TTFT target &lt; 350ms maintained</p>
+        </div>
+
+        {/* Metric 4 */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-750 transition-all shadow-sm">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-xs font-medium">Token Consumption & Cost</span>
+            <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <Coins className="w-4 h-4" />
+            </span>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl font-extrabold text-white tracking-tight">
+              {(totalWeeklyTokens / 1000000).toFixed(1)}M
+            </span>
+            <span className="text-xs font-mono text-slate-400">
+              (${totalWeeklyCost.toFixed(2)})
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-1">Prompt & completion tokens</p>
+        </div>
+      </div>
+
+      {/* Main Charts & Microservices Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Weekly Queries Trend */}
+        <div className="lg:col-span-2 p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <span>Weekly Query Throughput</span>
+                <Badge variant="primary" size="sm">Last 7 Days</Badge>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">Real-time daily completions processed by SelfAI cluster</p>
+            </div>
+            <button
+              onClick={() => setActiveTab('weekly-usage')}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors"
+            >
+              <span>Full Analytics</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={weeklyUsage}>
+                <defs>
+                  <linearGradient id="queryGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <XAxis 
+                  dataKey="dayName" 
+                  stroke="#64748b" 
+                  fontSize={11} 
+                  tickLine={false} 
+                />
+                <YAxis 
+                  stroke="#64748b" 
+                  fontSize={11} 
+                  tickLine={false} 
+                  tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`} 
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    borderColor: '#334155',
+                    borderRadius: '0.75rem',
+                    fontSize: '12px'
+                  }}
+                  formatter={(val: number) => [`${val.toLocaleString()} queries`, 'Traffic']}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="queriesCount" 
+                  stroke="#6366f1" 
+                  strokeWidth={2.5} 
+                  fillOpacity={1} 
+                  fill="url(#queryGrad)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-800/80 text-center text-xs">
+            <div>
+              <p className="text-[11px] text-slate-500">Peak Daily Queries</p>
+              <p className="font-bold text-slate-200 mt-0.5">74,200 (Fri)</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-slate-500">Avg Daily Volume</p>
+              <p className="font-bold text-slate-200 mt-0.5">56,285</p>
+            </div>
+            <div>
+              <p className="text-[11px] text-slate-500">System Error Rate</p>
+              <p className="font-bold text-emerald-400 mt-0.5">0.11%</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right 1 Col: Microservice Health status */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Server className="w-4 h-4 text-indigo-400" />
+                <span>Microservice Fleet</span>
+              </h3>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">Core AI infrastructure cluster uptime</p>
+
+            <div className="space-y-2.5">
+              {services.map((svc) => (
+                <div
+                  key={svc.id}
+                  className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between"
+                >
+                  <div className="min-w-0 pr-2">
+                    <p className="text-xs font-semibold text-slate-200 truncate">{svc.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{svc.region} • {svc.latencyMs}ms</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant={svc.status === 'operational' ? 'success' : 'warning'} size="sm">
+                      {svc.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('monitoring')}
+            className="w-full mt-4 py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-750 text-xs font-semibold text-slate-300 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <span>Inspect All Nodes</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Feature Flags Quick Management & Live Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Active Feature Flags quick control */}
+        <div className="lg:col-span-2 p-5 rounded-2xl bg-slate-900 border border-slate-800">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-indigo-400" />
+                <span>App Feature Flags & Controls</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">Toggle and monitor live app modules in production</p>
+            </div>
+            <button
+              onClick={() => setActiveTab('feature-control')}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
+            >
+              <span>Manage All ({features.length})</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="divide-y divide-slate-800/80">
+            {features.slice(0, 4).map((feat) => {
+              const canToggle = can('features:toggle');
+              return (
+                <div key={feat.id} className="py-3 flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-100">{feat.name}</span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
+                        {feat.category}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5 truncate">{feat.description}</p>
+                  </div>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right hidden sm:block">
+                      <span className="text-[11px] font-bold text-slate-300">{feat.rolloutPercentage}%</span>
+                      <p className="text-[10px] text-slate-500">Rollout</p>
+                    </div>
+
+                    {/* Toggle Button */}
+                    <button
+                      onClick={() => toggleFeature(feat.id)}
+                      disabled={!canToggle}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                        feat.enabled ? 'bg-indigo-600' : 'bg-slate-700'
+                      } ${!canToggle ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      title={canToggle ? 'Click to toggle feature' : 'Requires features:toggle permission'}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          feat.enabled ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* RBAC Active Role Card */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck className="w-4 h-4 text-indigo-400" />
+              <h3 className="text-sm font-bold text-white">RBAC Security Guard</h3>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Access permissions are strictly enforced on all admin features according to your current role.
+            </p>
+
+            <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Current Role:</span>
+                <Badge role={can('settings:edit') ? 'super_admin' : can('features:create') ? 'product_manager' : 'analyst'} size="sm" />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Feature Toggle:</span>
+                <span className={can('features:toggle') ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
+                  {can('features:toggle') ? 'Allowed' : 'Read-Only'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">User Management:</span>
+                <span className={can('users:edit_role') ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
+                  {can('users:edit_role') ? 'Full Access' : 'Restricted'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-400">Production Deploy:</span>
+                <span className={can('settings:edit') ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
+                  {can('settings:edit') ? 'Root Authorized' : 'Gated'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setActiveTab('rbac-users')}
+            className="w-full mt-4 py-2 px-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-xs font-semibold text-indigo-300 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <span>Inspect Permissions Matrix</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
